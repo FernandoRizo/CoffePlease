@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coffee Please · Dashboard</title>
+<style>
+:root{--bg:#f4f0e6;--ink:#1d2a22;--mut:#6b7468;--card:#fffdf7;--line:#ddd6c3;--g:#2e5d3e}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:22px;letter-spacing:-.5px}h1 small{font-weight:400;color:var(--mut);font-size:13px;margin-left:8px}a{color:var(--g)}
+main{max-width:1240px;margin:0 auto;padding:22px 28px 60px;display:grid;gap:20px}h2{margin:0 0 12px;font-size:16px}h3{margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card>span{display:block;font-size:11px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase}
+.card b{display:block;font-size:32px;margin-top:2px;letter-spacing:-1px}.card small,.m,td small{color:var(--mut);font-size:12px}
+.bars div{display:flex;align-items:center;gap:8px;margin-top:3px;font-size:12px}.bars i{display:block;height:9px;border-radius:5px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+select,input,button{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+button{cursor:pointer}button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.tw{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:#f0ebdc;text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
+th,td{padding:8px 12px;border-bottom:1px solid #eee8d8}tbody tr{cursor:pointer}tbody tr:hover{background:#f7f2e4}tbody tr.on{background:#e4eddc}
+em{font-style:normal;color:#fff;border-radius:6px;padding:1px 8px;font-weight:700}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:20px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:12px;display:block}
+.seg{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.leg{margin-top:8px;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:8px}
+.leg i{display:inline-block;width:160px;height:10px;border-radius:5px}
+.dg td{position:relative;padding:9px 6px}.dg td:last-child{text-align:right;white-space:nowrap;font-weight:600}.dg td i{position:absolute;left:6px;bottom:2px;height:3px;background:#c8643c;border-radius:2px;max-width:calc(100% - 12px)}
+.dg small{display:block}.tot td{font-size:16px;font-weight:700;border-bottom:0}#err{background:#fbe3dc;border:1px solid #e6a595;padding:12px 16px;border-radius:10px}
+</style></head><body>
+<header><h1>☕ coffee please.<small>dashboard de partidas</small></h1><span><button id="bRef">↻ Actualizar</button> <a href="/juego/">Ir al juego ↗</a></span></header>
+<main>
+<div id="err" hidden>No se pudo conectar con el servidor. Arráncalo con <b>npm start</b> y abre esta página desde <b>http://localhost:3000/dashboard/</b>.</div>
+<section class="cards" id="cards"></section>
+<section class="panel"><h2>Histórico de partidas</h2>
+ <div class="filters"><select id="fJ"><option value="">Todos los jugadores</option></select>
+ <select id="fR"><option value="">Todos los rangos</option><option>S</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
+ <select id="fE"><option value="">Todos los resultados</option><option value="victoria">Victoria</option><option value="derrota_ruptura">Derrota · ruptura</option><option value="derrota_caida">Derrota · caída</option><option value="abandono">Abandono</option></select>
+ <input type="date" id="fD" title="Desde"><input type="date" id="fH" title="Hasta"><button id="bClr">Limpiar</button></div>
+ <div class="tw"><table><thead><tr><th>Fecha</th><th>Jugador</th><th>Resultado</th><th>Puntaje</th><th>Rango</th><th>HP</th><th>Caídas</th><th>Duración</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <p class="m">Haz clic en una partida para ver su desglose y su recorrido. Se muestran las 100 más recientes.</p></section>
+<section class="panel"><h2 id="hTit">Mapa de calor</h2>
+ <div class="grid2"><div><div class="seg"><button id="bAc">Acumulado (filtros)</button><button id="bHe">Densidad de la partida</button><button id="bRu">Ruta por velocidad</button></div>
+ <canvas id="mapa" width="840" height="700"></canvas><div class="leg" id="leg"></div></div><div id="dg"><p class="m">Selecciona una partida del histórico para ver el desglose de penalizaciones.</p></div></div></section>
+</main>
+<script>
+const $=s=>document.querySelector(s),API=location.protocol.startsWith('http')?'':'http://localhost:3000';
+const RES={victoria:'Victoria',derrota_ruptura:'Derrota · ruptura',derrota_caida:'Derrota · caída',abandono:'Abandono'},RC={S:'#d4a017',A:'#2e7d32',B:'#1f8a8a',C:'#e67e22',D:'#c0392b'};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),n0=n=>Math.round(n).toLocaleString('es');
+const get=async u=>{const r=await fetch(API+u);if(!r.ok)throw new Error(r.status);return r.json()};
+const qs=()=>new URLSearchParams([['jugador','#fJ'],['rango','#fR'],['resultado','#fE'],['desde','#fD'],['hasta','#fH']].map(([k,s])=>[k,$(s).value]).filter(([,v])=>v)).toString();
+let sel=null,mode='ac',acum=[];
+// ---- Mapa cenital del nivel (X,Z del juego → píxeles). Si cambias plataformas en el juego, actualiza PL.
+const cv=$('#mapa'),cx=cv.getContext('2d'),S=40,X0=-3,Z0=-8.5,px=x=>(x-X0)*S,pz=z=>(z-Z0)*S;
+const PL=[[0,-5.4,3.6,4.6,'Rodillo'],[3.6,-5.4,2.8,3.6,'Silla'],[7.2,-5.4,3,3.6,'Libros'],[10.8,-5.4,3,3.6,'Fregadero'],[14.4,-5.4,3,3,'Esquina'],[14.4,-1.8,3,3,'Encimera'],[14.4,1.8,3,3,'Estufa'],[14.4,5.4,3,3,'Tabla'],[10.8,5.4,2.4,2.4,'Repisa'],[7.2,5.4,3,3,'Alacena'],[3.6,5.4,2.4,2.4,'Panera'],[0,5.4,3.6,3.8,'Cafetera']];
+function base(){cx.fillStyle='#efe9d8';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#e2b9a8';cx.fillRect(px(2),pz(-3.45),10.4*S,6.9*S);
+ cx.textAlign='center';PL.forEach(([x,z,w,d,n])=>{cx.fillStyle='#ecc995';cx.strokeStyle='#a8844f';cx.lineWidth=2;cx.beginPath();cx.roundRect(px(x-w/2),pz(z-d/2),w*S,d*S,6);cx.fill();cx.stroke();cx.fillStyle='#6b5736';cx.font='11px system-ui';cx.fillText(n,px(x),pz(z+d/2)-5)});
+ cx.font='18px system-ui';[[4],[8],[10]].forEach(([i])=>cx.fillText('✛',px(PL[i][0]),pz(PL[i][1])+6));cx.fillText('🔥',px(15.3),pz(1.8)+6);cx.fillText('☕',px(0),pz(5.4)+6);cx.fillText('🚩',px(0),pz(-5.4)+6);
+ cx.font='bold 10px system-ui';cx.fillStyle='#2e7d32';[2,5,9].forEach(i=>cx.fillText('CHECKPOINT',px(PL[i][0]),pz(PL[i][1])-PL[i][3]*S/2+12))}
+const pal=v=>{const s=[[0,[40,80,255]],[.35,[0,200,120]],[.65,[250,220,40]],[1,[230,30,20]]];for(let i=1;i<4;i++)if(v<=s[i][0]){const[a,A]=s[i-1],[b,B]=s[i],k=(v-a)/(b-a);return A.map((c,j)=>c+(B[j]-c)*k)}return s[3][1]};
+function heat(pts){const o=document.createElement('canvas');o.width=cv.width;o.height=cv.height;const g=o.getContext('2d'),r=.8*S;
+ for(const[x,z]of pts){const a=px(x),b=pz(z),gr=g.createRadialGradient(a,b,0,a,b,r);gr.addColorStop(0,'rgba(0,0,0,.12)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(a-r,b-r,2*r,2*r)}
+ const im=g.getImageData(0,0,o.width,o.height),d=im.data;let mx=1;for(let i=3;i<d.length;i+=4)if(d[i]>mx)mx=d[i];
+ for(let i=0;i<d.length;i+=4){const v=d[i+3]/mx;if(v<.03){d[i+3]=0;continue}const c=pal(v);d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=Math.min(235,70+v*170)}
+ g.putImageData(im,0,0);cx.drawImage(o,0,0)}
+function ruta(t){cx.lineWidth=4;cx.lineCap='round';
+ for(let i=1;i<t.length;i++){const[x0,,z0,t0]=t[i-1],[x1,,z1,t1]=t[i],dist=Math.hypot(x1-x0,z1-z0);if(dist>2.6)continue; // salto grande = reaparición tras caída
+  cx.strokeStyle=`hsl(${Math.min(dist/Math.max(.05,t1-t0)/4.5,1)*220},85%,48%)`;cx.beginPath();cx.moveTo(px(x0),pz(z0));cx.lineTo(px(x1),pz(z1));cx.stroke()}
+ cx.fillStyle='#111';cx.font='bold 16px system-ui';cx.textAlign='center';t.forEach(p=>{if(p[1]<.5)cx.fillText('✕',px(p[0]),pz(p[2])+5)})}
+function pintar(){base();const t=sel?sel.trajectory:null;
+ for(const[id,m]of[['bAc','ac'],['bHe','he'],['bRu','ru']])$('#'+id).classList.toggle('on',mode===m);
+ if(!sel||mode==='ac'){heat(acum);$('#hTit').textContent='Mapa de calor acumulado (partidas filtradas)'}
+ else{$('#hTit').textContent=`Partida #${sel.id} · ${sel.username}`;mode==='he'?heat(t.map(p=>[p[0],p[2]])):ruta(t)}
+ $('#leg').innerHTML=!sel||mode!=='ru'?'poco tiempo <i style="background:linear-gradient(90deg,#2850ff,#00c878,#fadc28,#e61e14)"></i> mucho tiempo (zonas donde la taza se atasca)':'detenido/lento <i style="background:linear-gradient(90deg,hsl(0,85%,48%),hsl(60,85%,48%),hsl(150,85%,48%),hsl(220,85%,48%))"></i> fluido · ✕ = caída'}
+// ---- Tarjetas, tabla y desglose
+function cards(r){const mx=Math.max(1,...Object.values(r.rangos));$('#cards').innerHTML=`<div class="card"><span>Partidas</span><b>${r.total}</b><small>${r.victorias} victorias · ${r.derrotas} derrotas · ${r.abandonos} abandonos</small></div>
+<div class="card"><span>Victoria / derrota</span><b>${(r.tasa_victoria*100).toFixed(0)}% <small>/ ${r.total?(r.derrotas/r.total*100).toFixed(0):0}%</small></b><small>sobre el total de partidas</small></div>
+<div class="card"><span>Puntaje promedio</span><b>${n0(r.puntaje_promedio)}</b><small>en victorias: ${n0(r.puntaje_promedio_victorias)} · derrotas y abandonos puntúan 0</small></div>
+<div class="card bars"><span>Rangos obtenidos</span>${[...'SABCD'].map(k=>`<div><strong style="width:12px;color:${RC[k]}">${k}</strong><i style="width:${r.rangos[k]/mx*140}px;min-width:2px;background:${RC[k]}"></i>${r.rangos[k]}</div>`).join('')}</div>`}
+function tabla(l){$('#tb').innerHTML=l.slice(0,100).map(p=>`<tr data-id="${p.id}" class="${sel&&sel.id===p.id?'on':''}"><td>${new Date(p.created_at).toLocaleString('es',{dateStyle:'short',timeStyle:'short'})}</td><td>${esc(p.username)}</td><td>${RES[p.result]}</td><td>${n0(p.score)}</td><td><em style="background:${RC[p.rating_rank]}">${p.rating_rank}</em></td><td>${p.hp_final}%</td><td>${p.falls_count}</td><td>${Math.round(p.duration_seconds)} s</td></tr>`).join('')||'<tr><td colspan="8">Sin partidas con estos filtros</td></tr>'}
+function desglose(p){const it=[['Daño físico (grietas)',(100-p.hp_final)*40,`${100-p.hp_final} HP perdidos × 40`],['Suciedad (hormigas)',p.dirty_percentage*35,`${p.dirty_percentage}% × 35`],['Dilución (agua)',p.dilution_percentage*50,`${p.dilution_percentage}% × 50`],['Caídas',p.falls_count*500,`${p.falls_count} × 500`]];
+ $('#dg').innerHTML=`<h3>${esc(p.username)} · ${RES[p.result]}</h3><p class="m">Partida #${p.id} · ${new Date(p.created_at).toLocaleString('es')} · ${Math.round(p.duration_seconds)} s · ${p.trajectory.length} puntos</p>
+ <table class="dg"><tr><td>Puntaje base</td><td>10.000</td></tr>${it.map(([n,v,d])=>`<tr><td>${n}<small>${d}</small><i style="width:${Math.min(100,v/100)}%"></i></td><td>−${n0(v)}</td></tr>`).join('')}
+ <tr class="tot"><td>Puntaje final${p.result==='victoria'?'':'<small>nivel no completado: 0 pts</small>'}</td><td>${n0(p.score)} <em style="background:${RC[p.rating_rank]}">${p.rating_rank}</em></td></tr></table>`}
+async function refresh(){try{const q=qs(),[r,l,h]=await Promise.all([get('/api/resumen?'+q),get('/api/partidas?'+q),get('/api/heatmap?'+q)]);
+ if(sel&&!l.some(p=>p.id===sel.id)){sel=null;$('#dg').innerHTML='<p class="m">Selecciona una partida del histórico para ver el desglose de penalizaciones.</p>';mode='ac'}
+ cards(r);tabla(l);acum=h.puntos;$('#err').hidden=true;pintar()}catch(e){$('#err').hidden=false}}
+async function jugadores(){try{for(const j of await get('/api/jugadores'))$('#fJ').insertAdjacentHTML('beforeend',`<option value="${esc(j.id)}">${esc(j.username)} (${j.partidas})</option>`)}catch(e){}}
+$('#tb').onclick=async e=>{const tr=e.target.closest('tr[data-id]');if(!tr)return;sel=await get('/api/partidas/'+tr.dataset.id);mode='ru';desglose(sel);refresh()};
+$('#bAc').onclick=()=>{mode='ac';pintar()};$('#bHe').onclick=()=>{if(sel){mode='he';pintar()}};$('#bRu').onclick=()=>{if(sel){mode='ru';pintar()}};
+$('#bRef').onclick=refresh;$('#bClr').onclick=()=>{for(const s of['#fJ','#fR','#fE','#fD','#fH'])$(s).value='';refresh()};
+for(const s of['#fJ','#fR','#fE','#fD','#fH'])$(s).onchange=refresh;
+jugadores();refresh();setInterval(refresh,15000);
+</script></body></html>
