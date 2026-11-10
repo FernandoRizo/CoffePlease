@@ -29,7 +29,7 @@ function validar(b) {
   };
 }
 const filtrar = q => db.partidas.filter(p =>
-  (!q.jugador || p.player_id === q.jugador) && (!q.rango || p.rating_rank === q.rango) && (!q.resultado || p.result === q.resultado) &&
+  (!q.jugador || p.player_id === q.jugador) && (!q.nivel || p.level_id === q.nivel) && (!q.rango || p.rating_rank === q.rango) && (!q.resultado || p.result === q.resultado) &&
   (!q.desde || p.created_at.slice(0, 10) >= q.desde) && (!q.hasta || p.created_at.slice(0, 10) <= q.hasta));
 function resumen(l) {
   const rangos = { S: 0, A: 0, B: 0, C: 0, D: 0 }; let victorias = 0, derrotas = 0, suma = 0, sumaV = 0;
