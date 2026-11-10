@@ -1,98 +1,49 @@
-# ☕ Coffee Please — Juego + Telemetría + Dashboard
+# ☕ Coffee Please · Nivel 01: La cocina de casa
 
-Todo corre en tu computadora con **un solo comando** y **sin instalar librerías**.
+Esta es una versión **editable y ejecutable** del prototipo web de Coffee Please. La distribución se ha rediseñado tomando como referencia una cocina doméstica cálida: una mesa de madera en el centro, sillas, puerta al fondo, alacenas, microondas, fregadero, estufa, ventana a la derecha y una cafetera sobre la encimera del fondo. El apartado artístico usa geometrías y materiales procedurales de Three.js; **no replica los modelos 3D, texturas o personajes de la imagen original**.
 
-```
-coffee-please/
-├── server.js              ← backend (API REST + sirve el juego y el dashboard)
-├── seed.js                ← genera partidas de ejemplo
-├── package.json
+## Jugar
+
+1. Descomprime el ZIP.
+2. Abre una terminal en la carpeta del proyecto.
+3. Ejecuta `npm start` (Node.js 18 o superior, sin `npm install`).
+4. Abre `http://localhost:3000/juego/`.
+5. Las estadísticas se consultan en `http://localhost:3000/dashboard/`.
+
+Controles: `W A S D` / flechas para moverse; `Espacio` para saltar; arrastrar la escena o `Q` y `E` para mover la cámara; `C` para centrarla; rueda del ratón para zoom; `P` para pausar; `R` para reiniciar. Hay controles táctiles básicos.
+
+## Qué se puede hacer en el nivel
+
+- **Comienzas encima de la mesa central.** La silla de la derecha y un banco pequeño permiten bajar sin romperse.
+- **Si caes directamente desde la mesa al suelo, la taza se rompe.** Se calcula la diferencia entre la altura de salida y la altura de aterrizaje: hasta 1.6 unidades es seguro; entre 1.6 y 2.75 hay daño; por encima de 2.75 hay ruptura y reaparición. Los saltos normales no se penalizan por alcanzar más altura en el aire.
+- **El suelo es jugable** y cuenta con espacios libres, un charco, migas y un obstáculo giratorio. No está compuesto por plataformas flotantes.
+- **Llegas a la cafetera escalando por cajas, un taburete y un cajón entreabierto** junto al mueble del fondo. Hay un ascenso alternativo junto al lado izquierdo de la cocina.
+- Hay puntos de control, salud, puntuación, rodillo móvil y algunos enemigos, sin llenar el escenario de objetos adicionales.
+- La opción **Ver recorrido** muestra un trayecto guiado mesa → silla → banco → suelo → cajas → taburete → cajón → cafetera.
+
+## Archivos editables
+
+```text
+CoffeePlease_CocinaReferencia/
+├── src/
+│   ├── physics.js            ← superficies, dimensiones, gravedad y caídas
+│   └── game.js               ← escenario 3D, mobiliario, enemigos y juego
 ├── public/
-│   ├── juego/index.html     ← el juego (ya envía telemetría)
-│   └── dashboard/index.html ← dashboard con métricas, histórico y mapa de calor
-└── data/                  ← se crea solo: db.json + trayectorias/<id>.json
+│   ├── juego/index.html      ← página autónoma: Three.js y código incluidos
+│   └── dashboard/index.html  ← histórico y mapa de calor actualizado
+├── server.js                 ← servidor HTTP y API de partidas
+├── seed.js                   ← datos ficticios para pruebas (opcional)
+├── rebuild.py                ← recompila el HTML autónomo
+├── DISENO_NIVEL_01.md        ← mapa, rutas, reglas y criterios de prueba
+└── package.json
 ```
 
-## Tutorial: ponerlo en marcha en local
+Cuando modifiques `src/game.js` o `src/physics.js`, ejecuta **`python rebuild.py`** dentro de esta carpeta para actualizar el código incluido en `public/juego/index.html`. Para editar el escenario, debes cambiar tanto la malla visible como la colisión correspondiente en `src/physics.js`.
 
-**1. Instala Node.js (versión 18 o superior).** Descárgalo de https://nodejs.org (versión LTS). Comprueba en una terminal:
-```
-node --version
-```
-**2. Descomprime el ZIP** y abre una terminal dentro de la carpeta `coffee-please`.
+## Telemetría
 
-**3. Enciende el servidor** (no hace falta `npm install`):
-```
-npm start
-```
-Verás: `Juego: http://localhost:3000/juego/` y `Dashboard: http://localhost:3000/dashboard/`.
+El ID de este nivel es `cocina-01-referencia`. Cada partida terminada se registra en la API y puede examinarse desde el dashboard, incluido su recorrido. Para datos **ficticios** de prueba, con el servidor iniciado ejecuta `npm run seed 30`. Los datos se guardan localmente en `data/`, carpeta que el programa crea automáticamente.
 
-**4. Juega:** abre http://localhost:3000/juego/ → "Empezar a jugar". La primera vez te pide un nombre de jugador (se guarda en tu navegador).
+## Validación y limitaciones
 
-**5. Mira tus datos:** abre http://localhost:3000/dashboard/ (botón "↻ Actualizar"; además se refresca cada 15 s).
-
-**6. (Opcional) Datos de ejemplo** para ver el dashboard lleno. Con el servidor encendido, en **otra** terminal:
-```
-npm run seed          # 30 partidas
-npm run seed 100      # 100 partidas
-```
-**7. Otro puerto:** `PORT=4000 npm start` (macOS/Linux) · PowerShell: `$env:PORT=4000; npm start` · cmd: `set PORT=4000 && npm start`.
-
-**8. Borrar todos los datos:** apaga el servidor (Ctrl+C) y elimina la carpeta `data/`.
-
-> Abre el juego siempre desde `http://localhost:3000/juego/`. Si lo abres con doble clic (`file://`) también envía datos, pero solo al puerto 3000.
-
-## Qué registra el juego
-
-- **Muestreo:** posición `{x, y, z, t}` cada **200 ms** de tiempo de juego (≈5 puntos/s, no 60). Las pausas no suman.
-- **Cuándo envía (una vez por partida, `POST /api/partidas`, asíncrono):**
-  - al **llegar a la cafetera** → `victoria`;
-  - al **reiniciar, volver al inicio o cerrar la pestaña** → `derrota_ruptura`, `derrota_caida` o `abandono` (según cómo terminó tu última caída). Cerrar la pestaña usa `sendBeacon`.
-  - Las partidas de menos de 3 s y el modo "Ver recorrido" no se envían.
-- **Puntaje:** solo se otorga al llegar a la cafetera. Derrotas y abandonos guardan puntaje 0 y rango D.
-
-```json
-{ "player_id": "…", "username": "Ana", "session_id": "…", "level_id": "cocina-01", "timestamp": "2026-11-03T18:20:00Z",
-  "result": "victoria",
-  "metrics": { "score": 8420, "duration_seconds": 96.4, "hp_final": 72, "falls_count": 1,
-               "dirty_percentage": 12, "dilution_percentage": 24, "rating_rank": "A" },
-  "trajectory": [ { "x": 0, "y": 1, "z": -5.4, "t": 0 }, … ] }
-```
-
-## Decisiones de implementación (y por qué)
-
-| Tema | Elección | Motivo |
-|---|---|---|
-| Backend | Node.js con módulos nativos (sin Express) | Mismo lenguaje que el juego; `npm start` sin instalar nada ni compilar |
-| Base de datos | `data/db.json` (jugadores + partidas) y un archivo JSON por trayectoria | Cero configuración; separa las trayectorias pesadas del índice. Equivale al esquema del PDF |
-| Dashboard | HTML/JS nativo, sin librerías, servido por el mismo servidor | Sin CORS ni build; funciona sin internet |
-| Heatmap | **Opción A: 2D top-down** dibujado en canvas con el plano real del nivel | El recorrido es rectangular y plano: se lee mejor desde arriba; no requiere capturas ni Heatmap.js |
-
-Esquema equivalente al del PDF: **jugadores** (`id, username, created_at`), **partidas** (`id, player_id, score, hp_final, dirty_percentage, dilution_percentage, falls_count, rating_rank, duration_seconds, result, created_at` + `session_id, level_id`) y **trayectorias** (`partida_id` + puntos `[x, y, z, t]`, en `data/trayectorias/<id>.json`).
-
-## API
-
-| Método y ruta | Qué hace |
-|---|---|
-| `POST /api/partidas` | Guarda una partida con su trayectoria (idempotente por `session_id`) |
-| `GET /api/resumen` | Total, victorias/derrotas/abandonos, tasa de victoria, puntaje promedio, rangos |
-| `GET /api/partidas` | Histórico (sin trayectoria), más reciente primero |
-| `GET /api/partidas/:id` | Detalle con trayectoria |
-| `GET /api/heatmap` | Puntos (x, z) de las partidas filtradas |
-| `GET /api/jugadores` | Jugadores y su número de partidas |
-
-Filtros (query string) en resumen, partidas y heatmap: `jugador` (id), `rango` (S–D), `resultado`, `desde` y `hasta` (`AAAA-MM-DD`, en UTC).
-
-## Solución de problemas
-
-- **El dashboard dice "No se pudo conectar":** el servidor no está encendido (`npm start`) o abriste la página desde otra dirección.
-- **Jugué y no aparece la partida:** debe durar al menos 3 s de juego y terminar (llegar a la meta, reiniciar, volver al inicio o cerrar la pestaña). Revisa la consola del navegador (F12) y la terminal del servidor.
-- **`EADDRINUSE`:** el puerto 3000 está ocupado; usa otro con `PORT=…`.
-- **Quieres otro nombre de jugador:** en la consola del navegador ejecuta `localStorage.removeItem('cp_username')` y recarga.
-
-## Cómo seguir creciendo
-
-- **PostgreSQL/Supabase:** reemplaza `guardar`, `filtrar` y `leerTray` en `server.js`; la API y el dashboard no cambian.
-- **Heatmap 3D (opción B):** carga el nivel con Three.js en el dashboard y dibuja la ruta con `TubeGeometry` coloreando por velocidad.
-- **Si cambias el nivel del juego,** actualiza la constante `PL` del dashboard (plataformas del mapa cenital).
-- El código del juego viene empaquetado en base64, igual que tu archivo original; la telemetría está en el bloque `TELEMETRÍA` del módulo `game`.
+Se verificó la sintaxis de los scripts, el arranque del servidor, la lógica de caída alta y una simulación de física con el camino de ascenso completo, además del recorrido automático hasta la cafetera. **No se validaron visualmente todos los ángulos de cámara ni el rendimiento en un dispositivo real**: hace falta jugarlo en navegador para ajustar saltos, sensibilidad y colisiones decorativas. Los muebles están construidos con formas básicas y detalles estilizados, no con modelos PBR de calidad comercial.
