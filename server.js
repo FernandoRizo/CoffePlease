@@ -2,7 +2,7 @@
 // Backend sin dependencias: solo módulos nativos de Node (>=18). Guarda en ./data (JSON + 1 archivo por trayectoria).
 const http = require('http'), fs = require('fs'), path = require('path');
 const PORT = process.env.PORT || 3000, PUB = path.join(__dirname, 'public');
-const DATA = path.join(__dirname, 'data'), TRAY = path.join(DATA, 'trayectorias'), DBF = path.join(DATA, 'db.json');
+const DATA = process.env.COFFEE_DATA_DIR || path.join(__dirname, 'data'), TRAY = path.join(DATA, 'trayectorias'), DBF = path.join(DATA, 'db.json');
 fs.mkdirSync(TRAY, { recursive: true });
 let db = { next_id: 1, jugadores: {}, partidas: [] };
 try { db = JSON.parse(fs.readFileSync(DBF, 'utf8')); } catch {}

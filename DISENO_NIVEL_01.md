@@ -61,4 +61,4 @@ Inspiración de la imagen de referencia aportada: mesa de madera protagonista, g
 - La telemetría usa `level_id = cocina-01-referencia`.
 - El dashboard dispone de mapa de calor del nuevo nivel.
 
-**Pendiente de prueba de jugador:** legibilidad de las señales desde distintas cámaras, colisiones con patas, decoraciones y bordes de muebles; FPS en laptops y móviles, y consistencia de checkpoints. Se trata de una iteración jugable, no de una escena con arte final.
+Actualización v1.3: se retiraron las tres plataformas del atajo izquierdo y sus flechas. El recorrido principal, dimensiones, peligros y física permanecen. Al completar el nivel se continúa a la oficina. Se validaron las pruebas de física y la transición en navegador; consultar PRUEBAS.md. El rendimiento en dispositivos físicos y el ajuste de dificultad mediante partidas humanas siguen pendientes.
