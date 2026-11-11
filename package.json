@@ -1,7 +1,7 @@
 {
   "name": "coffee-please-telemetria",
-  "version": "1.4.0",
-  "description": "Coffee Please — cocina, oficina y obra en construcción",
+  "version": "1.5.0",
+  "description": "Coffee Please — nivel 3 con excavaciones y vigas que se desploman",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",

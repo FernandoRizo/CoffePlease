@@ -47,3 +47,11 @@ Los puntos de control conservan el progreso de posición, no devuelven salud aut
 ## Comprobaciones
 
 `node --test tests/construction.test.mjs` verifica geometría del suelo y hoyos, alturas de caída, aceite, bola de demolición, contacto con enemigos y ruta hasta la meta. Los tests son deterministas y no sustituyen una prueba manual de cámara y dificultad con WebGL.
+
+## Revisión v1.5 — sin camino seguro
+
+Se eliminó el recorrido lateral sin saltos. Ahora dos excavaciones transversales de 5.6 unidades de anchura atraviesan el terreno completo: no existe suelo por los bordes para rodearlas. Cada excavación se atraviesa mediante **cuatro vigas estrechas de madera** ubicadas a distinta altura y con pequeños espacios entre ellas (o saltos de gran precisión). Una viga activada por el aterrizaje tiene un temporizador independiente de **1.7 a 2.05 segundos**: después de unos 0.65 segundos previos a la caída tiembla, y cuando expira pierde la colisión; la representación visual cae junto con ella. Se recupera **5 segundos después** y se rearma al volver a pisarla. Los temporizadores se reinician al reaparacer la taza en un checkpoint.
+
+Se añadieron cuatro depresiones (baches) al relieve y tres aberturas mortales adicionales. Los robots, conos y un charco de aceite se reubicaron fuera de los fosos para mantener peligros alcanzables. El jugador conserva la posibilidad de moverse libremente sobre terreno entre cruces, pero debe afrontar al menos dos secciones de salto. El demo de ruta automática pasa por ambas y el ascenso final.
+
+**Pruebas:** `npm run test:construction` comprueba baches, suelo interrumpido de pared a pared, temporizador de viga, caída, reconstrucción, independencia de temporizadores y posibilidad de completar el recorrido. Conviene validar manualmente visibilidad de zanjas, distancia y tiempo de saltos en PC y móvil.

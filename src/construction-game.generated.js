@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {platforms,createPlayer,step,obstacleAt,cameraMovement,autoInput,GOAL_INDEX,FLOOR_INDEX,FLOOR_PUDDLE,FLOOR_CRUMBS,groundHeight,OIL_PATCHES,PITS,CONES,onOil,wreckingBallAt,WRECKING_ANCHOR,enemyAt} from './physics.js';
+import {platforms,createPlayer,step,obstacleAt,cameraMovement,autoInput,GOAL_INDEX,FLOOR_INDEX,FLOOR_PUDDLE,FLOOR_CRUMBS,groundHeight,OIL_PATCHES,PITS,CONES,onOil,wreckingBallAt,WRECKING_ANCHOR,enemyAt,TRENCHES,BACHES,BEAM_INDICES,BEAM_RESPAWN,beamPhase} from './physics.js';
 
 const $=id=>document.getElementById(id);
 const scene=new THREE.Scene();scene.background=new THREE.Color('#f0cfa8');scene.fog=new THREE.Fog('#f0cfa8',48,88);
@@ -52,14 +52,38 @@ for(const h of PITS){
  const rim=torus(h.r+.045,.11,warning,h.x,groundHeight(h.x+h.r+.12,h.z)??.12,h.z);rim.rotation.x=Math.PI/2;
  for(let k=0;k<5;k++){const a=k*Math.PI*2/5,xx=h.x+Math.cos(a)*(h.r+.38),zz=h.z+Math.sin(a)*(h.r+.38);box(.4,.03,.18,M.black,xx,(groundHeight(xx,zz)??.1)+.05,zz).rotation.y=-a;}
 }
+// Las dos excavaciones cortan la obra de pared a pared: sin pasillo exterior.
+for(const h of TRENCHES){
+ const lip=h.w/2;
+ for(const side of [-1,1]){
+  const x=h.x+side*lip;
+  box(.23,.19,21.1,warning,x,-.04,0);
+  for(let z=-9.8;z<10.0;z+=1.45){const stripe=box(.28,.035,.68,M.black,x,.063,z);stripe.rotation.y=-.4;}
+  box(.13,2.5,21,soil,x-side*.15,-1.55,0);
+ }
+ box(h.w,.1,21,darkPit,h.x,-2.72,0);
+}
+for(const b of BACHES){const y=groundHeight(b.x+b.r*.92,b.z)??-.08;
+ const edge=torus(b.r*.83,.075,gravel,b.x,y+.03,b.z);edge.rotation.x=Math.PI/2;
+ const patch=mesh(new THREE.CircleGeometry(b.r*.72,28),new THREE.MeshBasicMaterial({color:'#665c50',transparent:true,opacity:.35,depthWrite:false}),b.x,(groundHeight(b.x,b.z)??-.14)+.055,b.z);patch.rotation.x=-Math.PI/2;
+}
 // Perímetro abierto: montones, mallas, barricadas y edificios de fondo (no bloquean cámara).
 for(const z of [-10.85,10.85]){for(let x=-23;x<24;x+=4){box(3.7,.55,.12,meshSafety,x,.3,z);box(.09,1.2,.11,iron,x-1.85,.6,z);}}
 for(const x of [-23.85,23.85]){for(let z=-8;z<10;z+=3.5){box(.12,.45,3.3,meshSafety,x,.25,z);box(.12,1.1,.09,iron,x,.55,z);}}
 for(let k=0;k<10;k++){const x=-27+k*5.8,h=5+(k*3%9);box(4.1,h,3.8,mat(k%2?'#7f8e8b':'#9daba7'),x,h/2,-19.4);}
 // Materiales del escenario: cada superficie marcada en physics.js tiene una representación creíble.
+const fragileMeshes=[];
 for(let i=0;i<platforms.length;i++){
  const p=platforms[i];if(p.floor||p.kind==='checkpoint')continue;
- if(p.kind==='scaffold'){
+ if(p.kind==='fragile'){
+  const g=new THREE.Group();g.position.set(p.x,p.y,p.z);scene.add(g);
+  const wood=mat('#98623b'),nail=mat('#8b9798');
+  box(p.w,.15,p.d,wood,0,-.075,0,g);
+  for(const z of [-p.d*.34,0,p.d*.34])box(p.w,.04,.065,plank,0,.006,z,g);
+  for(const x of [-p.w*.35,p.w*.35])for(const z of [-p.d*.35,p.d*.35])cylinder(.05,.05,.022,nail,x,.025,z,g);
+  const crack=box(.035,.026,p.d*.68,M.black,.12,.02,0,g);crack.rotation.y=.22;
+  fragileMeshes.push({g,i,y:p.y});
+ }else if(p.kind==='scaffold'){
   box(p.w,.17,p.d,plank,p.x,p.y-.085,p.z);
   for(const sx of [-1,1])for(const sz of [-1,1]){
    const x=p.x+sx*(p.w/2-.18),z=p.z+sz*(p.d/2-.18);
@@ -134,12 +158,14 @@ const plate=cylinder(.7,.72,.07,M.metal,GP.x,GP.y+.04,GP.z+.25);
 const stream=cylinder(.04,.06,.5,M.coffee,GP.x,GP.y+1.0,GP.z+.2);stream.visible=false;
 label('META · CAFÉ EN LA OBRA',GP.x,GP.y+2.9,GP.z,4.1,'#415232');
 label('INICIO · BAJA POR LOS PALÉS',platforms[0].x,platforms[0].y+2,platforms[0].z,4.5,'#513527');
-label('RUTA SEGURA →',-12,1.8,7,3.1,'#5b4023');
+label('VIGAS INESTABLES · ¡NO TE DETENGAS!',-7.2,3.2,4.3,5.6,'#683021');
+label('SEGUNDO CRUCE · SALTA RÁPIDO',6.65,3.2,-3.5,5.2,'#683021');
 label('ESCALA A LA MESITA',17.1,3.5,4.2,3.9,'#5b4023');
 // Marcadores de control visibles pero no sólidos.
 for(const i of [11,12]){const q=platforms[i],y=groundHeight(q.x,q.z)??0;
  const ring=torus(.62,.07,M.green,q.x,y+.07,q.z);ring.rotation.x=Math.PI/2;label('CHECKPOINT',q.x,y+1.35,q.z,2.35,'#2f634a');
 }
+
 // Perfil de taza inspirado en el modelo original Ceramica_Menta, con interior hueco.
 const cup=new THREE.Group();scene.add(cup);
 const profile=[[0,0],[.32,0],[.38,.06],[.43,.65],[.44,.8],[.42,.84],[.38,.81],[.37,.7],[.32,.15],[0,.15]].map(([x,y])=>new THREE.Vector2(x,y));
@@ -217,6 +243,20 @@ function spinHit(){for(const s of spinners){if(player.y>s.y+.55||player.y+.84<s.
   if(Math.hypot(dx*t-rx,dz*t-rz)<.32){const l=Math.hypot(rx,rz)||1;damage(22,rx/l*4,rz/l*4);break;}}}}
 function fxExtra(dt){
  for(const s of spinners)s.arm.rotation.y+=s.sp*dt;
+ // La pieza visual sigue el mismo estado que usa la colisión.
+ for(const o of fragileMeshes){
+  const phase=beamPhase(player,o.i,worldTime),q=platforms[o.i];
+  if(phase.phase==='fallen'){
+   const elapsed=q.collapseDelay+BEAM_RESPAWN-phase.remaining;
+   o.g.visible=elapsed<.56;
+   o.g.position.y=o.y-Math.min(4,elapsed*7);
+   o.g.rotation.z=Math.min(1.1,elapsed*2.0)*(o.i%2?1:-1);
+  }else{
+   o.g.visible=true;o.g.position.y=o.y;
+   o.g.position.x=q.x+(phase.phase==='warning'?Math.sin(worldTime*43+o.i)*.07:0);
+   o.g.rotation.z=phase.phase==='warning'?Math.sin(worldTime*35+o.i)*.08:0;
+  }
+ }
  const b=wreckingBallAt(worldTime),A=WRECKING_ANCHOR;
  const diff=new THREE.Vector3(b.x-A.x,b.y-A.y,b.z-A.z),len=diff.length();
  craneCable.position.set((A.x+b.x)/2,(A.y+b.y)/2,(A.z+b.z)/2);
@@ -263,8 +303,9 @@ function preStep(dt){
  player.speedMul=1-att.length*.05;
  if(player.platform===FLOOR_INDEX&&Math.hypot(player.x-FLOOR_PUDDLE.x,player.z-FLOOR_PUDDLE.z)<FLOOR_PUDDLE.r)player.speedMul*=.7;
 }
-let oilHint=false;
+let oilHint=false,beamHintUntil=0;
 function postStep(res,dt){
+ if(res.beam==='warning'&&worldTime>beamHintUntil){notify('¡LA VIGA SE CAE! Salta a la siguiente.');beamHintUntil=worldTime+1.0;}
  if(player.kt>0)player.kt-=dt;else if(player.kx||player.kz){const f=Math.exp(-dt*9);player.kx*=f;player.kz*=f;}
  if(auto)return;
  if(att.length){mug.hp=Math.max(0,mug.hp-att.length*.5*dt);mug.dirty=Math.min(100,mug.dirty+att.length*1.5*dt);}
@@ -329,11 +370,11 @@ addEventListener('pagehide',()=>telSend('beacon'));
 function notify(text){$('toast').textContent=text;$('toast').classList.add('show');toastTimer=3;}
 function clockText(t){return `${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;}
 function clearFragments(){for(const f of fragments)scene.remove(f.mesh);fragments.length=0;}
-function start(isAuto=false){telSend();auto=isAuto;yaw=Math.PI/2;pitch=.48;heading=Math.PI/2;worldTime=0;oilHint=false;player=createPlayer();deaths=0;elapsed=0;fill=0;deathTimer=0;lastCheckpoint=0;bestProgress=0;accumulator=0;keys.clear();jumpQueued=false;resetMug(true);telStart();clearFragments();cup.visible=true;liquid.visible=false;stream.visible=false;state='playing';$('intro').hidden=true;$('hud').hidden=false;$('overlay').hidden=true;$('touchControls').hidden=false;document.body.classList.add('playing');goalGuide.hidden=false;document.activeElement?.blur();notify(auto?'Recorrido guiado · descender del andamio, cruzar la obra y subir a la mesita':'Baja por los palés, rodea los hoyos y evita el aceite. ¡Cuidado con la grúa!');}
-function home(){telSend();resetMug(true);state='intro';auto=false;keys.clear();clearFragments();player=createPlayer();fill=0;cup.visible=true;liquid.visible=false;stream.visible=false;steam.forEach(s=>s.visible=false);$('intro').hidden=false;$('hud').hidden=true;$('overlay').hidden=true;$('touchControls').hidden=true;document.body.classList.remove('playing');goalGuide.hidden=true;}
+function start(isAuto=false){$('nextLevel').hidden=true;telSend();auto=isAuto;yaw=Math.PI/2;pitch=.48;heading=Math.PI/2;worldTime=0;oilHint=false;beamHintUntil=0;player=createPlayer();deaths=0;elapsed=0;fill=0;deathTimer=0;lastCheckpoint=0;bestProgress=0;accumulator=0;keys.clear();jumpQueued=false;resetMug(true);telStart();clearFragments();cup.visible=true;liquid.visible=false;stream.visible=false;state='playing';$('intro').hidden=true;$('hud').hidden=false;$('overlay').hidden=true;$('touchControls').hidden=false;document.body.classList.add('playing');goalGuide.hidden=false;document.activeElement?.blur();notify(auto?'Recorrido guiado · descender del andamio, cruzar la obra y subir a la mesita':'Baja por los palés, rodea los hoyos y evita el aceite. ¡Cuidado con la grúa!');}
+function home(){$('nextLevel').hidden=true;telSend();resetMug(true);state='intro';auto=false;keys.clear();clearFragments();player=createPlayer();fill=0;cup.visible=true;liquid.visible=false;stream.visible=false;steam.forEach(s=>s.visible=false);$('intro').hidden=false;$('hud').hidden=true;$('overlay').hidden=true;$('touchControls').hidden=true;document.body.classList.remove('playing');goalGuide.hidden=true;}
 function pause(){if(state==='paused'){state=previousState;$('overlay').hidden=true;return;}if(!['playing','dead','serving'].includes(state))return;previousState=state;state='paused';keys.clear();jumpQueued=false;$('resultEyebrow').textContent='UN MOMENTO PARA RESPIRAR';$('resultTitle').textContent='En pausa.';$('resultText').textContent='Tu café puede esperar un momento.';$('resume').innerHTML='Continuar <span>↗</span>';$('overlay').hidden=false;}
 function die(reason){state='dead';deaths++;TEL.last=reason;if(reason==='caída'||reason==='caída alta')mug.falls++;if(reason==='hp'){dustBurst(player.x,player.y+.4,player.z,26);shake=.8;}deathTimer=1.15;cup.visible=false;notify(reason==='hp'?'¡La taza se rompió! Volvemos al último punto de control.':reason==='caída alta'?'¡Caída demasiado alta! La taza se rompió. Baja usando los muebles.':reason==='caída'?'¡Caíste en un hoyo de la construcción!':'¡Ups! Volvemos al último punto de control.');for(let i=0;i<18;i++){const m=mesh(shardGeo,M.green,player.x,Math.max(player.y,.1)+.3,player.z);m.scale.set(.6+Math.random(),.6+Math.random(),.6+Math.random());fragments.push({mesh:m,v:new THREE.Vector3((Math.random()-.5)*4,2+Math.random()*3,(Math.random()-.5)*4)});}}
-function win(){state='won';stream.visible=false;$('resultEyebrow').textContent=auto?'RECORRIDO COMPLETADO':'MISIÓN CUMPLIDA';$('resultTitle').textContent='Ahora sí, un café.';$('resultText').textContent=`Llegaste en ${clockText(elapsed)} con ${deaths} ${deaths===1?'ruptura':'rupturas'}. ¡Sobreviviste a la obra y llegaste a la mesita!`;$('resume').innerHTML='Jugar de nuevo <span>↗</span>';showScore();telSend('fetch','victoria');$('overlay').hidden=false;}
+function win(){state='won';stream.visible=false;try{localStorage.setItem('cp_level_1_completed','1');}catch(e){}$('nextLevel').hidden=true;$('resultEyebrow').textContent=auto?'RECORRIDO COMPLETADO':'MISIÓN CUMPLIDA';$('resultTitle').textContent='Ahora sí, un café.';$('resultText').textContent=`Llegaste en ${clockText(elapsed)} con ${deaths} ${deaths===1?'ruptura':'rupturas'}. ¡Sobreviviste a la obra y llegaste a la mesita!`;$('resume').innerHTML='Jugar de nuevo <span>↗</span>';showScore();telSend('fetch','victoria');$('overlay').hidden=false;}
 function input(){
  if(auto)return autoInput(player);
  const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
@@ -398,7 +439,7 @@ function render(now){requestAnimationFrame(render);const dt=Math.min((now-last)/
  renderer.render(scene,camera);
 }
 camera.position.set(-8,32,35);camTarget.set(-4,1,0);requestAnimationFrame(render);
-$('play').onclick=()=>start();$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('restart').onclick=()=>start(auto);$('resume').onclick=()=>state==='won'?start():pause();$('home').onclick=home;
+$('nextLevel').onclick=()=>{location.href='/obra/';};$('play').onclick=()=>start();$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('restart').onclick=()=>start(auto);$('resume').onclick=()=>state==='won'?start():pause();$('home').onclick=home;
 $('help').onclick=()=>{if(['playing','dead','serving'].includes(state))pause();$('helpDialog').showModal();};$('closeHelp').onclick=()=>$('helpDialog').close();
 const movement=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyQ','KeyE']);
 addEventListener('keydown',e=>{if($('helpDialog').open||e.target instanceof HTMLButtonElement&&['Space','Enter'].includes(e.code))return;if(movement.has(e.code)){if(state==='intro')return;e.preventDefault();keys.add(e.code);if(e.code==='Space'&&!e.repeat)jumpQueued=true;}if(!e.repeat){if(e.code==='KeyC'){yaw=Math.PI/2;pitch=.48;}if(e.code==='KeyP'||e.code==='Escape')pause();if(e.code==='KeyR'&&state!=='intro')start(auto);}});
@@ -416,5 +457,3 @@ renderer.domElement.addEventListener('pointerdown',e=>{if(state!=='playing'||aut
 renderer.domElement.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId||state!=='playing')return;yaw-=(e.clientX-drag.x)*.006;pitch=THREE.MathUtils.clamp(pitch+(e.clientY-drag.y)*.004,.2,1.05);drag.x=e.clientX;drag.y=e.clientY;});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>drag=null);
 renderer.domElement.addEventListener('wheel',e=>{if(state!=='playing')return;e.preventDefault();cameraDistance=THREE.MathUtils.clamp(cameraDistance+e.deltaY*.004,3.5,9);},{passive:false});
-
-function nextLevel(){location.href=new URL(location.protocol==='file:'?'../oficina/index.html':'../oficina/',location.href).href;}

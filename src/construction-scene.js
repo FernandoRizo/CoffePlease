@@ -27,14 +27,38 @@ for(const h of PITS){
  const rim=torus(h.r+.045,.11,warning,h.x,groundHeight(h.x+h.r+.12,h.z)??.12,h.z);rim.rotation.x=Math.PI/2;
  for(let k=0;k<5;k++){const a=k*Math.PI*2/5,xx=h.x+Math.cos(a)*(h.r+.38),zz=h.z+Math.sin(a)*(h.r+.38);box(.4,.03,.18,M.black,xx,(groundHeight(xx,zz)??.1)+.05,zz).rotation.y=-a;}
 }
+// Las dos excavaciones cortan la obra de pared a pared: sin pasillo exterior.
+for(const h of TRENCHES){
+ const lip=h.w/2;
+ for(const side of [-1,1]){
+  const x=h.x+side*lip;
+  box(.23,.19,21.1,warning,x,-.04,0);
+  for(let z=-9.8;z<10.0;z+=1.45){const stripe=box(.28,.035,.68,M.black,x,.063,z);stripe.rotation.y=-.4;}
+  box(.13,2.5,21,soil,x-side*.15,-1.55,0);
+ }
+ box(h.w,.1,21,darkPit,h.x,-2.72,0);
+}
+for(const b of BACHES){const y=groundHeight(b.x+b.r*.92,b.z)??-.08;
+ const edge=torus(b.r*.83,.075,gravel,b.x,y+.03,b.z);edge.rotation.x=Math.PI/2;
+ const patch=mesh(new THREE.CircleGeometry(b.r*.72,28),new THREE.MeshBasicMaterial({color:'#665c50',transparent:true,opacity:.35,depthWrite:false}),b.x,(groundHeight(b.x,b.z)??-.14)+.055,b.z);patch.rotation.x=-Math.PI/2;
+}
 // Perímetro abierto: montones, mallas, barricadas y edificios de fondo (no bloquean cámara).
 for(const z of [-10.85,10.85]){for(let x=-23;x<24;x+=4){box(3.7,.55,.12,meshSafety,x,.3,z);box(.09,1.2,.11,iron,x-1.85,.6,z);}}
 for(const x of [-23.85,23.85]){for(let z=-8;z<10;z+=3.5){box(.12,.45,3.3,meshSafety,x,.25,z);box(.12,1.1,.09,iron,x,.55,z);}}
 for(let k=0;k<10;k++){const x=-27+k*5.8,h=5+(k*3%9);box(4.1,h,3.8,mat(k%2?'#7f8e8b':'#9daba7'),x,h/2,-19.4);}
 // Materiales del escenario: cada superficie marcada en physics.js tiene una representación creíble.
+const fragileMeshes=[];
 for(let i=0;i<platforms.length;i++){
  const p=platforms[i];if(p.floor||p.kind==='checkpoint')continue;
- if(p.kind==='scaffold'){
+ if(p.kind==='fragile'){
+  const g=new THREE.Group();g.position.set(p.x,p.y,p.z);scene.add(g);
+  const wood=mat('#98623b'),nail=mat('#8b9798');
+  box(p.w,.15,p.d,wood,0,-.075,0,g);
+  for(const z of [-p.d*.34,0,p.d*.34])box(p.w,.04,.065,plank,0,.006,z,g);
+  for(const x of [-p.w*.35,p.w*.35])for(const z of [-p.d*.35,p.d*.35])cylinder(.05,.05,.022,nail,x,.025,z,g);
+  const crack=box(.035,.026,p.d*.68,M.black,.12,.02,0,g);crack.rotation.y=.22;
+  fragileMeshes.push({g,i,y:p.y});
+ }else if(p.kind==='scaffold'){
   box(p.w,.17,p.d,plank,p.x,p.y-.085,p.z);
   for(const sx of [-1,1])for(const sz of [-1,1]){
    const x=p.x+sx*(p.w/2-.18),z=p.z+sz*(p.d/2-.18);
@@ -109,7 +133,8 @@ const plate=cylinder(.7,.72,.07,M.metal,GP.x,GP.y+.04,GP.z+.25);
 const stream=cylinder(.04,.06,.5,M.coffee,GP.x,GP.y+1.0,GP.z+.2);stream.visible=false;
 label('META · CAFÉ EN LA OBRA',GP.x,GP.y+2.9,GP.z,4.1,'#415232');
 label('INICIO · BAJA POR LOS PALÉS',platforms[0].x,platforms[0].y+2,platforms[0].z,4.5,'#513527');
-label('RUTA SEGURA →',-12,1.8,7,3.1,'#5b4023');
+label('VIGAS INESTABLES · ¡NO TE DETENGAS!',-7.2,3.2,4.3,5.6,'#683021');
+label('SEGUNDO CRUCE · SALTA RÁPIDO',6.65,3.2,-3.5,5.2,'#683021');
 label('ESCALA A LA MESITA',17.1,3.5,4.2,3.9,'#5b4023');
 // Marcadores de control visibles pero no sólidos.
 for(const i of [11,12]){const q=platforms[i],y=groundHeight(q.x,q.z)??0;
