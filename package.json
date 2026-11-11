@@ -1,15 +1,16 @@
 {
   "name": "coffee-please-telemetria",
-  "version": "1.3.0",
-  "description": "Coffee Please — cocina y oficina según plano",
+  "version": "1.4.0",
+  "description": "Coffee Please — cocina, oficina y obra en construcción",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",
-    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs",
-    "build": "node build.js",
+    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs",
+    "build": "node build.js && node build-construction.js",
     "test:api": "node tests/api.test.mjs",
     "test:browser": "node tests/browser.test.cjs",
-    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node tests/api.test.mjs"
+    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs",
+    "test:construction": "node --test tests/construction.test.mjs"
   },
   "engines": {
     "node": ">=18"
