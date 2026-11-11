@@ -1,22 +1,31 @@
 // Nivel 03 — Obra en construcción. Eje Y = altura de la base de la taza.
-// Terreno continuo ondulado, fosas sin superficie y plataformas sólidas alcanzables.
+// Terreno quebrado: dos excavaciones transversales obligan a cruzar vigas que se desploman.
 export const GRAVITY=18, SPEED=4.6, JUMP=7.5;
 export const FLOOR_INDEX=3, GOAL_INDEX=10;
 export const PITS=[
  {x:-8,z:-2.5,r:2.2,name:'Zanja de tuberías'},
  {x:4.0,z:2.3,r:2.05,name:'Foso de cimentación'},
- {x:11,z:-3.7,r:2.2,name:'Pozo de obra'}
+ {x:12.4,z:-.5,r:1.95,name:'Pozo de obra'},
+ {x:-12.4,z:-5.5,r:1.05,name:'Bache profundo'},
+ {x:1.55,z:7.3,r:.8,name:'Abertura de drenaje'},
+ {x:14,z:6.6,r:.85,name:'Hundimiento'}
 ];
+export const TRENCHES=[
+ {x:-7,w:5.6,name:'Excavación de cimentación'},
+ {x:6.65,w:5.6,name:'Zanja del edificio'}
+];
+export const BACHES=[{x:-12,z:5.5,r:1.2,depth:.38},{x:-2.8,z:3.1,r:1.1,depth:.46},{x:1.1,z:-5.5,r:1.15,depth:.43},{x:12,z:3.8,r:1.2,depth:.42}];
 export const OIL_PATCHES=[
  {x:-2.2,z:-.8,r:2.65},
- {x:9,z:1.0,r:2.25}
+ {x:12.3,z:3.4,r:1.65}
 ];
-export const CONES=[[-12,0],[-10,-4.3],[-6,1.4],[2,-.1],[6,4.6],[12,-.6],[15.3,5.1],[19,-3.5]];
+export const CONES=[[-12,0],[-10,-4.3],[-3.35,2.2],[2,-.1],[2.5,4.6],[14,-3.8],[15.3,5.1],[19,-3.5]];
 export const FLOOR_PUDDLE={x:1200,z:1200,r:0},FLOOR_CRUMBS={x:1200,z:1200,r:0};
 export function groundHeight(x,z){
  if(x<-23.6||x>23.6||z<-10.6||z>10.6)return null;
- if(PITS.some(h=>Math.hypot(x-h.x,z-h.z)<h.r))return null;
- return .15*Math.sin(x*.47)+.12*Math.cos(z*.59)+.08*Math.sin((x+z)*.43)+.33*Math.exp(-((x-1)**2+(z+6)**2)/23);
+ if(PITS.some(h=>Math.hypot(x-h.x,z-h.z)<h.r)||TRENCHES.some(h=>Math.abs(x-h.x)<h.w/2))return null;
+ const relief=.15*Math.sin(x*.47)+.12*Math.cos(z*.59)+.08*Math.sin((x+z)*.43)+.33*Math.exp(-((x-1)**2+(z+6)**2)/23);
+ return relief-BACHES.reduce((n,b)=>n+b.depth*Math.exp(-((x-b.x)**2+(z-b.z)**2)/(b.r*b.r)),0);
 }
 const p=(x,y,z,w,d,name,kind,extra={})=>({x,y,z,w,d,name,kind,...extra});
 export const platforms=[
@@ -34,11 +43,35 @@ export const platforms=[
  // Marcadores de checkpoint en el terreno: no son plataformas sólidas.
  p(-2.0,0,7.2,.5,.5,'Zona segura de la obra','checkpoint',{checkpointRank:2}),
  p(12.5,0,6.2,.5,.5,'Final del terreno','checkpoint',{checkpointRank:3}),
- // Algunas plataformas opcionales que conectan partes del terreno.
- p(4,1.13,-5.4,2.3,2.0,'Cajón de herramientas','box'),
- p(6.0,1.9,-5.0,2.0,1.85,'Tuberías apiladas','pipe')
+ // Coberturas elevadas entre excavaciones. No sirven para evitar los dos cruces.
+ p(-.7,1.13,-6.4,2.3,2.0,'Cajón de herramientas','box'),
+ p(1.0,1.9,-6.1,2.0,1.85,'Tuberías apiladas','pipe'),
+ // Vigas de madera inestables: crujen, tiemblan y pierden la colisión temporalmente.
+ p(-9.08,.67,4.2,1.12,1.45,'Viga I · 1','fragile',{collapseDelay:2.05}),
+ p(-7.53,.75,4.45,1.12,1.4,'Viga I · 2','fragile',{collapseDelay:1.85}),
+ p(-5.98,.69,4.16,1.12,1.4,'Viga I · 3','fragile',{collapseDelay:1.7}),
+ p(-4.43,.77,4.38,1.18,1.43,'Viga I · 4','fragile',{collapseDelay:1.9}),
+ p(4.44,.7,-3.65,1.1,1.42,'Viga II · 1','fragile',{collapseDelay:1.95}),
+ p(5.94,.76,-3.38,1.12,1.4,'Viga II · 2','fragile',{collapseDelay:1.8}),
+ p(7.44,.7,-3.64,1.12,1.4,'Viga II · 3','fragile',{collapseDelay:1.75}),
+ p(8.94,.8,-3.42,1.18,1.44,'Viga II · 4','fragile',{collapseDelay:1.95})
 ];
 export const GOAL=platforms[GOAL_INDEX];
+export const BEAM_INDICES=platforms.flatMap((q,i)=>q.kind==='fragile'?[i]:[]);
+export const BEAM_RESPAWN=5.0;
+// Estado independiente por partida; nada colapsa hasta que el jugador aterriza sobre esa viga.
+export function beamPhase(player,index,time){
+ const b=player.beamTimers?.[index];if(!b)return {phase:'intact',remaining:Infinity};
+ const elapsed=time-b;const delay=platforms[index].collapseDelay;
+ if(elapsed<delay)return {phase:elapsed>=delay-.65?'warning':'active',remaining:delay-elapsed};
+ if(elapsed<delay+BEAM_RESPAWN)return {phase:'fallen',remaining:delay+BEAM_RESPAWN-elapsed};
+ return {phase:'intact',remaining:Infinity};
+}
+function updateBeams(player,time){
+ for(const i of BEAM_INDICES){if(beamPhase(player,i,time).phase==='intact'&&player.beamTimers?.[i]!==undefined)delete player.beamTimers[i];}
+ if(player.grounded&&platforms[player.platform]?.kind==='fragile'&&beamPhase(player,player.platform,time).phase==='fallen'){player.grounded=false;player.vy=Math.min(0,player.vy);}
+}
+
 export function isOil(x,z){return OIL_PATCHES.some(q=>Math.hypot(x-q.x,z-q.z)<q.r);}
 export function onOil(player){const g=groundHeight(player.x,player.z);return g!==null&&player.y<=g+.17&&isOil(player.x,player.z);}
 // Bola oscilante real: la esfera y la colisión comparten las mismas coordenadas.
@@ -47,31 +80,39 @@ export function wreckingBallAt(t){const a=Math.sin(t*1.12)*.93,L=5.4;return {x:W
 export function obstacleAt(t){const q=wreckingBallAt(t);return {...q,halfLength:q.radius};}
 export function hitsObstacle(player,t){const b=wreckingBallAt(t);return Math.hypot(player.x-b.x,player.y+.43-b.y,player.z-b.z)<b.radius+.32;}
 export function enemyAt(t){return [
- {x:-2.8+Math.sin(t*.9)*2.3,z:5.0,y:groundHeight(-2.8+Math.sin(t*.9)*2.3,5)||0,r:.54},
- {x:9.5+Math.sin(t*1.2+1.8)*2,z:6.2,y:groundHeight(9.5+Math.sin(t*1.2+1.8)*2,6.2)||0,r:.55}
+ {x:-1.0+Math.sin(t*.9)*1.3,z:5.0,y:groundHeight(-1.0+Math.sin(t*.9)*1.3,5)||0,r:.54},
+ {x:11.8+Math.sin(t*1.2+1.8)*1.75,z:8.3,y:groundHeight(11.8+Math.sin(t*1.2+1.8)*1.75,8.3)||0,r:.55}
 ];}
 export function hitsEnemy(player,t){return enemyAt(t).some(e=>Math.hypot(player.x-e.x,player.z-e.z)<e.r+.36&&player.y<e.y+1.05&&player.y+.8>e.y);}
 export function cameraMovement(right,forward,yaw){return {x:Math.sin(yaw)*forward+Math.cos(yaw)*right,z:-Math.cos(yaw)*forward+Math.sin(yaw)*right};}
-export function createPlayer(index=0){const q=platforms[index];const terrain=!!q.floor||q.kind==='checkpoint',x=q.spawn?.x??q.x,z=q.spawn?.z??q.z;return {x,y:terrain?(groundHeight(x,z)??0):q.y,z,vy:0,grounded:true,platform:terrain?FLOOR_INDEX:index,checkpoint:index,checkpointRank:q.checkpointRank||0,dropOriginY:terrain?(groundHeight(x,z)??0):q.y,demoStage:0,kx:0,kz:0};}
-function blocked(x,z,player){
+export function createPlayer(index=0){const q=platforms[index];const terrain=!!q.floor||q.kind==='checkpoint',x=q.spawn?.x??q.x,z=q.spawn?.z??q.z;return {x,y:terrain?(groundHeight(x,z)??0):q.y,z,vy:0,grounded:true,platform:terrain?FLOOR_INDEX:index,checkpoint:index,checkpointRank:q.checkpointRank||0,dropOriginY:terrain?(groundHeight(x,z)??0):q.y,demoStage:0,kx:0,kz:0,beamTimers:{}};}
+function blocked(x,z,player,time=0){
  if(x<-23.35||x>23.35||z<-10.35||z>10.35)return true;
  const g=groundHeight(x,z),old=groundHeight(player.x,player.z);
  if(player.grounded&&player.platform===FLOOR_INDEX&&g!==null&&old!==null&&g-old>.42)return true;
  // Los conos son obstáculos bajos y permiten saltar por encima.
  if(player.y<.55&&CONES.some(([cx,cz])=>Math.hypot(x-cx,z-cz)<.38))return true;
- return platforms.some(q=>!q.floor&&q.kind!=='checkpoint'&&Math.abs(x-q.x)<q.w/2+.22&&Math.abs(z-q.z)<q.d/2+.22&&player.y<q.y-.32&&player.y+.84>q.y-.4);
+ return platforms.some((q,i)=>!q.floor&&q.kind!=='checkpoint'&&(q.kind!=='fragile'||beamPhase(player,i,time).phase!=='fallen')&&Math.abs(x-q.x)<q.w/2+.22&&Math.abs(z-q.z)<q.d/2+.22&&player.y<q.y-.32&&player.y+.84>q.y-.4);
 }
-export const ROUTE=[{i:1},{i:2},{x:-13.6,z:2,y:0},{x:-12.8,z:7,y:0},{x:-4,z:7.4,y:0},{x:4.5,z:7.4,y:0},{x:12.5,z:6.5,y:0},{x:14,z:4.2,y:0},{i:7},{i:8},{i:9},{i:10}];
+export const ROUTE=[
+ {i:1},{i:2},{x:-13.6,z:2,y:0},{x:-10.75,z:4.2,y:0},
+ {i:15},{i:16},{i:17},{i:18},
+ {x:-3.35,z:4.6,y:0},{x:-1,z:6,y:0},{x:1.0,z:5.45,y:0},
+ {x:1,z:.5,y:0},{x:2.5,z:-3.6,y:0},{x:3.3,z:-3.6,y:0},
+ {i:19},{i:20},{i:21},{i:22},
+ {x:10,z:-3.4,y:0},{x:16.1,z:-3.4,y:0},
+ {i:7},{i:8},{i:9},{i:10}
+];
 export function autoInput(p){
  let n=p.demoStage||0,q=ROUTE[Math.min(n,ROUTE.length-1)],target=q.i==null?q:platforms[q.i],d=Math.hypot(target.x-p.x,target.z-p.z);
  if(p.grounded&&d<.36&&(q.i==null||p.platform===q.i)&&n<ROUTE.length-1){p.demoStage=++n;q=ROUTE[n];target=q.i==null?q:platforms[q.i];d=Math.hypot(target.x-p.x,target.z-p.z);}
- return {x:d<.14?0:(target.x-p.x)/(d||1),z:d<.14?0:(target.z-p.z)/(d||1),jump:p.grounded&&target.y>p.y+.38&&d<2.5};
+ return {x:d<.14?0:(target.x-p.x)/(d||1),z:d<.14?0:(target.z-p.z)/(d||1),jump:p.grounded&&d<2.5&&(target.y>p.y+.38||target.kind==='fragile'&&p.platform!==q.i)};
 }
 export function step(player,input,dt,time=0){
- const p=player,len=Math.max(1,Math.hypot(input.x||0,input.z||0)),oil=onOil(p),speed=SPEED*(p.speedMul??1)*(oil?.38:1);
+ const p=player;updateBeams(p,time);const len=Math.max(1,Math.hypot(input.x||0,input.z||0)),oil=onOil(p),speed=SPEED*(p.speedMul??1)*(oil?.38:1);
  const dx=((input.x||0)/len*speed+(p.kx||0))*dt,dz=((input.z||0)/len*speed+(p.kz||0))*dt;
- if(!blocked(p.x+dx,p.z,p))p.x+=dx;
- if(!blocked(p.x,p.z+dz,p))p.z+=dz;
+ if(!blocked(p.x+dx,p.z,p,time))p.x+=dx;
+ if(!blocked(p.x,p.z+dz,p,time))p.z+=dz;
  // Terreno irregular: al caminar, la base sigue el relieve; sobre un hoyo desaparece el apoyo.
  if(p.grounded&&p.platform===FLOOR_INDEX){const g=groundHeight(p.x,p.z);if(g!==null&&Math.abs(g-p.y)<.45){p.y=g;p.dropOriginY=g;}}
  const jumped=!!(input.jump&&p.grounded&&!oil);
@@ -80,13 +121,14 @@ export function step(player,input,dt,time=0){
  let landedOn=-1,fallDamage=0,brokenFall=false;
  if(p.vy<=0){let top=-Infinity;
   for(let i=0;i<platforms.length;i++){
-   const q=platforms[i];if(q.floor||q.kind==='checkpoint'||q.y<=top)continue;
+   const q=platforms[i];if(q.floor||q.kind==='checkpoint'||q.y<=top||q.kind==='fragile'&&beamPhase(p,i,time).phase==='fallen')continue;
    if(Math.abs(p.x-q.x)<q.w/2+.12&&Math.abs(p.z-q.z)<q.d/2+.12&&oldY>=q.y-.025&&p.y<=q.y){top=q.y;landedOn=i;}
   }
   const g=groundHeight(p.x,p.z);
   if(g!==null&&g>top&&oldY>=g-.04&&p.y<=g){landedOn=FLOOR_INDEX;top=g;}
   if(landedOn>=0){const q=platforms[landedOn];const fall=Math.max(0,p.dropOriginY-top);
    p.y=top;p.vy=0;p.grounded=true;p.platform=landedOn;brokenFall=fall>2.75;
+   if(q.kind==='fragile'&&p.beamTimers[landedOn]===undefined)p.beamTimers[landedOn]=time;
    fallDamage=(!brokenFall&&fall>1.6)?Math.min(65,Math.round((fall-1.6)*38)):0;
    p.dropOriginY=top;
    if(!brokenFall&&(q.checkpointRank||0)>p.checkpointRank){p.checkpointRank=q.checkpointRank;p.checkpoint=landedOn;}
@@ -97,5 +139,5 @@ export function step(player,input,dt,time=0){
   if(rank>p.checkpointRank){const index=rank===3?12:rank===2?11:FLOOR_INDEX;p.checkpointRank=rank;p.checkpoint=index;}
  }
  const dead=brokenFall||p.y<-2.9;
- return {dead,reason:brokenFall?'caída alta':dead?'foso':'',landedOn,fallDamage,oil:onOil(p),oilJumpBlocked:!!(input.jump&&oil),hit:hitsObstacle(p,time),enemy:hitsEnemy(p,time),goal:p.grounded&&p.platform===GOAL_INDEX&&Math.hypot(p.x-GOAL.x,p.z-GOAL.z)<.65};
+ return {dead,reason:brokenFall?'caída alta':dead?'foso':'',landedOn,fallDamage,oil:onOil(p),oilJumpBlocked:!!(input.jump&&oil),beam:platforms[p.platform]?.kind==='fragile'?beamPhase(p,p.platform,time).phase:null,hit:hitsObstacle(p,time),enemy:hitsEnemy(p,time),goal:p.grounded&&p.platform===GOAL_INDEX&&Math.hypot(p.x-GOAL.x,p.z-GOAL.z)<.65};
 }

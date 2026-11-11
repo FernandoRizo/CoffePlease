@@ -8,7 +8,7 @@ if(!game.includes(mark)||!game.includes(mark2))throw Error('No se encontró el m
 const head=game.slice(0,game.indexOf(mark)),tail=game.slice(game.indexOf(mark2));
 let construction=head+read('src/construction-scene.js')+'\n'+tail;
 const replace=(a,b,required=true)=>{if(required&&!construction.includes(a))throw Error('Falta marcador del motor: '+a.slice(0,90));construction=construction.replace(a,b);};
-replace('FLOOR_CRUMBS}', 'FLOOR_CRUMBS,groundHeight,OIL_PATCHES,PITS,CONES,onOil,wreckingBallAt,WRECKING_ANCHOR,enemyAt}');
+replace('FLOOR_CRUMBS}', 'FLOOR_CRUMBS,groundHeight,OIL_PATCHES,PITS,CONES,onOil,wreckingBallAt,WRECKING_ANCHOR,enemyAt,TRENCHES,BACHES,BEAM_INDICES,BEAM_RESPAWN,beamPhase}');
 const lightsA=construction.indexOf('// Iluminación ambiental'),lightsB=construction.indexOf('const shellM=',lightsA);
 if(lightsA<0||lightsB<0)throw Error('No se identificó el bloque de iluminación');
 construction=construction.slice(0,lightsA)+`const goalL=new THREE.PointLight('#ffe5b2',22,9,2);goalL.position.set(GP.x,GP.y+2,GP.z);scene.add(goalL);\n`+construction.slice(lightsB);
@@ -16,6 +16,20 @@ const fxA=construction.indexOf('function fxExtra('),fxB=construction.indexOf('fu
 if(fxA<0||fxB<0)throw Error('No se identificó el bloque de enemigos');
 construction=construction.slice(0,fxA)+`function fxExtra(dt){
  for(const s of spinners)s.arm.rotation.y+=s.sp*dt;
+ // La pieza visual sigue el mismo estado que usa la colisión.
+ for(const o of fragileMeshes){
+  const phase=beamPhase(player,o.i,worldTime),q=platforms[o.i];
+  if(phase.phase==='fallen'){
+   const elapsed=q.collapseDelay+BEAM_RESPAWN-phase.remaining;
+   o.g.visible=elapsed<.56;
+   o.g.position.y=o.y-Math.min(4,elapsed*7);
+   o.g.rotation.z=Math.min(1.1,elapsed*2.0)*(o.i%2?1:-1);
+  }else{
+   o.g.visible=true;o.g.position.y=o.y;
+   o.g.position.x=q.x+(phase.phase==='warning'?Math.sin(worldTime*43+o.i)*.07:0);
+   o.g.rotation.z=phase.phase==='warning'?Math.sin(worldTime*35+o.i)*.08:0;
+  }
+ }
  const b=wreckingBallAt(worldTime),A=WRECKING_ANCHOR;
  const diff=new THREE.Vector3(b.x-A.x,b.y-A.y,b.z-A.z),len=diff.length();
  craneCable.position.set((A.x+b.x)/2,(A.y+b.y)/2,(A.z+b.z)/2);
@@ -36,8 +50,8 @@ replace(oldHit,`if(res.hit){const o=obstacleAt(worldTime),dx=player.x-o.x,dz=pla
  if(res.enemy){const e=enemyAt(worldTime).sort((a,b)=>Math.hypot(player.x-a.x,player.z-a.z)-Math.hypot(player.x-b.x,player.z-b.z))[0];const dx=player.x-e.x,dz=player.z-e.z,len=Math.hypot(dx,dz)||1;damage(18,dx/len*5,dz/len*5);}
  if(res.oil&&!oilHint){notify('¡ACEITE! Movimiento lento y salto desactivado. Sal del charco.');oilHint=true;}
  if(!res.oil)oilHint=false;`);
-replace('function postStep(res,dt){', 'let oilHint=false;\nfunction postStep(res,dt){');
-replace('worldTime=0;player=createPlayer()', 'worldTime=0;oilHint=false;player=createPlayer()');
+replace('function postStep(res,dt){', `let oilHint=false,beamHintUntil=0;\nfunction postStep(res,dt){\n if(res.beam==='warning'&&worldTime>beamHintUntil){notify('¡LA VIGA SE CAE! Salta a la siguiente.');beamHintUntil=worldTime+1.0;}`);
+replace('worldTime=0;player=createPlayer()', 'worldTime=0;oilHint=false;beamHintUntil=0;player=createPlayer()');
 replace('let best=platforms[FLOOR_INDEX].y;', 'let best=groundHeight(x,z)??-2.9;');
 replace("'¡Te caíste fuera de la cocina!'", "'¡Caíste en un hoyo de la construcción!'");
 replace("'Una caída desde la mesa te rompe. ¡Baja por la silla!'", "'Baja por los palés, rodea los hoyos y evita el aceite. ¡Cuidado con la grúa!'");
@@ -64,8 +78,8 @@ let html=htmlBase.replace('Cocina abierta · Nivel 1','Obra en construcción · 
  .replace('DEMO 03 · COCINA ABIERTA','NIVEL 03 · OBRA EN CONSTRUCCIÓN')
  .replace('UNA TAZA. UNA COCINA. UN DESTINO.','UNA TAZA. UNA OBRA. UN DESTINO.')
  .replace('Primero, la aventura.<br>Después, <em>el café.</em>','Una obra peligrosa.<br>Un <em>último café.</em>')
- .replace(/<p>Eres una taza[\s\S]*?<\/p>/,'<p>Comienza sobre un andamio y desciende por palés. Cruza un terreno irregular, esquiva hoyos y enemigos. Los charcos de aceite te frenan e impiden saltar. La bola de demolición barre el centro. Escala barriles y sacos hasta la mesita del café.</p>')
- .replace(/<p>Puedes <b>bajar[\s\S]*?<\/p>/,'<p>Las caídas grandes rompen la taza. Los hoyos son mortales; el aceite reduce la velocidad y desactiva el salto. Rodea los conos, esquiva la bola de demolición y a los robots de obra. Hay checkpoints, y puedes explorar el terreno o tomar rutas elevadas.</p>');
+ .replace(/<p>Eres una taza[\s\S]*?<\/p>/,'<p>Descubre un sitio de construcción sin caminos seguros. Dos zanjas cortan la obra y tendrás que cruzarlas saltando por vigas que tiemblan y se desploman poco después de pisarlas. Hay baches, aceite, enemigos y una bola de demolición. Al otro extremo te espera la mesita del café.</p>')
+ .replace(/<p>Puedes <b>bajar[\s\S]*?<\/p>/,'<p>Las caídas grandes rompen la taza. Los hoyos son mortales; el aceite reduce la velocidad y desactiva el salto. Rodea los conos, esquiva la bola de demolición y a los robots de obra. Los dos pasos obligatorios son vigas que caerán a los 1.7–2.1 segundos de pisarlas y reaparecerán tras un intervalo. Hay checkpoints antes y después de los cruces.</p>');
 const aa=html.indexOf('const payload=')+14,bb=html.indexOf(';',aa);
 if(aa<14||bb<aa)throw Error('No se encontró la plantilla para el nivel 3');
 html=html.slice(0,aa)+JSON.stringify({...vendor,game:encode(construction+hook),physics:encode(read('src/construction-physics.js'))})+html.slice(bb);

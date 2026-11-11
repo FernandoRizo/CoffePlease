@@ -6,7 +6,8 @@ function drop(x,y,z){const p=P.createPlayer();Object.assign(p,{x,y,z,grounded:fa
 test('terreno irregular y tres hoyos transitables por sus bordes',()=>{
  assert.ok(Number.isFinite(P.groundHeight(-13,7)));
  assert.notEqual(P.groundHeight(-13,7),P.groundHeight(10,7));
- for(const h of P.PITS){assert.equal(P.groundHeight(h.x,h.z),null);assert.ok(Number.isFinite(P.groundHeight(h.x,h.z+h.r+1)));}
+ for(const h of P.PITS){assert.equal(P.groundHeight(h.x,h.z),null);}
+ assert.ok(Number.isFinite(P.groundHeight(-13,8.6)));
 });
 test('caer en el hoyo rompe la taza',()=>{
  const h=P.PITS[0],{out}=drop(h.x,0.3,h.z);assert.equal(out.dead,true);assert.equal(out.reason,'foso');
@@ -33,6 +34,30 @@ test('la bola de demolición oscila y puede golpear',()=>{
 test('robot de obra detecta contacto a la altura del piso',()=>{
  const e=P.enemyAt(0)[0];assert.equal(P.hitsEnemy({x:e.x,y:e.y,z:e.z},0),true);
  assert.equal(P.hitsEnemy({x:e.x,y:e.y+3,z:e.z},0),false);
+});
+test('el pasillo seguro desapareció: ambas excavaciones cortan todo el terreno',()=>{
+ for(const h of P.TRENCHES){for(let z=-10;z<=10;z+=.5)assert.equal(P.groundHeight(h.x,z),null);}
+ assert.ok(P.BACHES.length>=4);assert.ok(P.PITS.length>=5);
+ assert.equal(P.BEAM_INDICES.length,8);
+});
+test('pisar una viga activa aviso, la hace caer y luego reaparece',()=>{
+ const i=P.BEAM_INDICES[0],q=P.platforms[i],player=P.createPlayer();
+ Object.assign(player,{x:q.x,y:q.y+1.1,z:q.z,vy:0,grounded:false,dropOriginY:q.y+1.1,platform:P.FLOOR_INDEX});
+ let t=0,landed=false,dead=false;
+ for(let k=0;k<120*3;k++){t=k*D;const r=P.step(player,{x:0,z:0},D,t);if(r.landedOn===i){landed=true;break;}assert.equal(r.dead,false);}
+ assert.equal(landed,true);
+ assert.equal(P.beamPhase(player,i,t+.1).phase,'active');
+ assert.equal(P.beamPhase(player,i,t+q.collapseDelay-.1).phase,'warning');
+ assert.equal(P.beamPhase(player,i,t+q.collapseDelay+.05).phase,'fallen');
+ const s=P.step(player,{x:0,z:0},D,t+q.collapseDelay+.05);
+ assert.equal(player.grounded,false);assert.ok(player.y<q.y);assert.notEqual(player.platform,P.GOAL_INDEX);
+ assert.equal(P.beamPhase(player,i,t+q.collapseDelay+P.BEAM_RESPAWN+.1).phase,'intact');
+});
+test('la viga siguiente mantiene su propio temporizador',()=>{
+ const a=P.BEAM_INDICES[0],b=P.BEAM_INDICES[1];
+ const player=P.createPlayer();player.beamTimers[a]=2;
+ assert.equal(P.beamPhase(player,a,2+P.platforms[a].collapseDelay+.1).phase,'fallen');
+ assert.equal(P.beamPhase(player,b,3.5).phase,'intact');
 });
 test('el ascenso final se puede completar y tiene checkpoints',()=>{
  let player=P.createPlayer(),won=false,deaths=0;

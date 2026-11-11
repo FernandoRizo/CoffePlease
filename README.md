@@ -67,3 +67,8 @@ La taza comienza en un andamio alto, desciende por palés y debe atravesar un te
 - Generar páginas sin dependencias adicionales: `npm run build`; el script crea `public/obra/index.html`, conecta la oficina y actualiza `public/levels.json`.
 - Ejecutar `npm run test:construction` para probar física, peligros y recorrido. Las pruebas visuales WebGL requieren un navegador compatible.
 - Documento de diseño: [DISENO_NIVEL_03.md](DISENO_NIVEL_03.md).
+
+
+## v1.5 — Cruces de vigas colapsables
+
+El nivel 3 elimina el antiguo corredor seguro mediante dos excavaciones transversales que bloquean el paso por el suelo en toda la anchura. Cada una se supera con cuatro vigas estrechas de madera que empiezan a temblar al pisarlas, se caen a los 1.7–2.05 segundos y reaparecen 5 segundos después. También hay baches, más huecos mortales y peligros recolocados. Se mantienen los niveles 1 y 2, la transición y la telemetría. Revisa `DISENO_NIVEL_03.md`, ejecuta `npm run build` y `npm run test:construction`.
