@@ -56,3 +56,14 @@ Consulta **PRUEBAS.md** para el alcance de la validación y **DISENO_NIVEL_02.md
 Base: repositorio FernandoRizo/CoffePlease, rama main, commit `dba3d79a43f833971af2426d0b43d1b9bd352522` (v1.1). El chat previo permitió recuperar el plano image(5).png, pero no el ZIP CoffeePlease_Niveles_1_y_2_v1.2.zip. Por ello esta entrega reconstruye las funciones descritas de la v1.2 sobre la base disponible; no es una modificación de aquel ZIP.
 
 Arte 3D procedural estilizado. Los volúmenes principales de muebles y paneles tienen colisión simplificada; teclados, libros, grifo y otros detalles son decorativos. Se probó con Microsoft Edge en escritorio y vista móvil emulada. No se ha medido el rendimiento en teléfonos físicos. No se ha publicado esta versión en GitHub.
+
+
+## Nivel 3 — Obra en construcción (v1.4)
+
+La taza comienza en un andamio alto, desciende por palés y debe atravesar un terreno irregular con **tres fosos mortales**, **dos charcos de aceite** que reducen la velocidad y bloquean el salto, **conos**, una **bola de demolición oscilante**, **robots de obra** y cucarachas. La meta está sobre una mesita elevada en el extremo opuesto.
+
+- Acceso directo: `http://localhost:3000/obra/`. Al terminar la oficina, el botón de continuar conduce a la obra.
+- Fuentes editables: `src/construction-physics.js` y `src/construction-scene.js`.
+- Generar páginas sin dependencias adicionales: `npm run build`; el script crea `public/obra/index.html`, conecta la oficina y actualiza `public/levels.json`.
+- Ejecutar `npm run test:construction` para probar física, peligros y recorrido. Las pruebas visuales WebGL requieren un navegador compatible.
+- Documento de diseño: [DISENO_NIVEL_03.md](DISENO_NIVEL_03.md).
