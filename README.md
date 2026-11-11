@@ -1,49 +1,58 @@
-# ☕ Coffee Please · Nivel 01: La cocina de casa
+# Coffee Please v1.3 — La oficina
 
-Esta es una versión **editable y ejecutable** del prototipo web de Coffee Please. La distribución se ha rediseñado tomando como referencia una cocina doméstica cálida: una mesa de madera en el centro, sillas, puerta al fondo, alacenas, microondas, fregadero, estufa, ventana a la derecha y una cafetera sobre la encimera del fondo. El apartado artístico usa geometrías y materiales procedurales de Three.js; **no replica los modelos 3D, texturas o personajes de la imagen original**.
+Dos niveles jugables, código editable y dashboard local. La oficina sigue el plano aportado: fregadero a la izquierda, cuatro cubículos en dos filas desplazadas, dos libreros largos y mesa con cafetera a la derecha.
 
 ## Jugar
 
-1. Descomprime el ZIP.
-2. Abre una terminal en la carpeta del proyecto.
-3. Ejecuta `npm start` (Node.js 18 o superior, sin `npm install`).
-4. Abre `http://localhost:3000/juego/`.
-5. Las estadísticas se consultan en `http://localhost:3000/dashboard/`.
+1. Descomprime el ZIP completo.
+2. Instala Node.js 18 o superior si todavía no lo tienes.
+3. Abre una terminal en esta carpeta y ejecuta `npm start` o `node server.js`.
+4. Visita **http://localhost:3000/juego/** para comenzar en la cocina.
 
-Controles: `W A S D` / flechas para moverse; `Espacio` para saltar; arrastrar la escena o `Q` y `E` para mover la cámara; `C` para centrarla; rueda del ratón para zoom; `P` para pausar; `R` para reiniciar. Hay controles táctiles básicos.
+- Oficina directa: **http://localhost:3000/oficina/**.
+- Dashboard: **http://localhost:3000/dashboard/**.
+- No es necesario ejecutar `npm install` para jugar. Three.js está incluido.
+- Los HTML también pueden abrirse directamente para jugar sin servidor; el dashboard y el guardado de partidas necesitan el servidor.
 
-## Qué se puede hacer en el nivel
+En Windows puedes abrir **INICIAR_WINDOWS.cmd**. Mantén abierta la ventana mientras juegas.
 
-- **Comienzas encima de la mesa central.** La silla de la derecha y un banco pequeño permiten bajar sin romperse.
-- **Si caes directamente desde la mesa al suelo, la taza se rompe.** Se calcula la diferencia entre la altura de salida y la altura de aterrizaje: hasta 1.6 unidades es seguro; entre 1.6 y 2.75 hay daño; por encima de 2.75 hay ruptura y reaparición. Los saltos normales no se penalizan por alcanzar más altura en el aire.
-- **El suelo es jugable** y cuenta con espacios libres, un charco, migas y un obstáculo giratorio. No está compuesto por plataformas flotantes.
-- **Llegas a la cafetera escalando por cajas, un taburete y un cajón entreabierto** junto al mueble del fondo. Hay un ascenso alternativo junto al lado izquierdo de la cocina.
-- Hay puntos de control, salud, puntuación, rodillo móvil y algunos enemigos, sin llenar el escenario de objetos adicionales.
-- La opción **Ver recorrido** muestra un trayecto guiado mesa → silla → banco → suelo → cajas → taburete → cajón → cafetera.
+## Controles y recorrido
 
-## Archivos editables
+WASD / flechas: movimiento respecto a la cámara. Espacio: salto. Arrastre o Q/E: cámara. C: centrar. Rueda: distancia. P: pausa. R: reinicio. Hay controles táctiles.
 
-```text
-CoffeePlease_CocinaReferencia/
-├── src/
-│   ├── physics.js            ← superficies, dimensiones, gravedad y caídas
-│   └── game.js               ← escenario 3D, mobiliario, enemigos y juego
-├── public/
-│   ├── juego/index.html      ← página autónoma: Three.js y código incluidos
-│   └── dashboard/index.html  ← histórico y mapa de calor actualizado
-├── server.js                 ← servidor HTTP y API de partidas
-├── seed.js                   ← datos ficticios para pruebas (opcional)
-├── rebuild.py                ← recompila el HTML autónomo
-├── DISENO_NIVEL_01.md        ← mapa, rutas, reglas y criterios de prueba
-└── package.json
-```
+Oficina: **fregadero → silla → caja → pasillo → repisas del segundo librero → bandeja → mesa con cafetera**. Camina por el suelo, explora los cubículos o escala cualquiera de los libreros. Las sillas tienen asientos y apoyos elevados utilizables. Los cables frenan; saltarlos evita ese efecto. El ventilador gira y empuja solamente dentro de su alcance y dirección, con cobertura detrás de los muebles. Su sector y partículas muestran el barrido.
 
-Cuando modifiques `src/game.js` o `src/physics.js`, ejecuta **`python rebuild.py`** dentro de esta carpeta para actualizar el código incluido en `public/juego/index.html`. Para editar el escenario, debes cambiar tanto la malla visible como la colisión correspondiente en `src/physics.js`.
+Las cucarachas avisan antes de embestir. Una aspiradora patrulla el fondo y dos brazos giratorios golpean sobre un escritorio y un librero. Los golpes pueden provocar caídas. Caídas hasta 1.6 unidades: seguras; de 1.6 a 2.75: daño; mayores: ruptura y reaparición. Hay puntos de control en el suelo y el ascenso final.
+
+**Ver recorrido** es una ayuda sin golpes ni viento aplicado al jugador y no registra puntuaciones. La partida normal sí activa todos los peligros. Las pruebas también recorren la oficina con el viento activo.
+
+## Nivel 1 y transición
+
+Se conserva la cocina, su física, controles, enemigos y puntuación. Se eliminan las tres plataformas del atajo izquierdo descrito en la v1.2. Tras llenar la taza aparece **Continuar a la oficina**. La oficina inicia una nueva partida con el mismo nombre de jugador y sus propias métricas.
 
 ## Telemetría
 
-El ID de este nivel es `cocina-01-referencia`. Cada partida terminada se registra en la API y puede examinarse desde el dashboard, incluido su recorrido. Para datos **ficticios** de prueba, con el servidor iniciado ejecuta `npm run seed 30`. Los datos se guardan localmente en `data/`, carpeta que el programa crea automáticamente.
+Se registran resultado, salud, suciedad, dilución, caídas, puntuación, duración y trayectoria. Cada nivel usa su identificador: `cocina-01-referencia` y `oficina-02-plano`. El dashboard permite filtrar por nivel y dibuja el mapa correspondiente. La opción de todos los niveles combina estadísticas, pero no superpone mapas incompatibles.
 
-## Validación y limitaciones
+Los datos se guardan en `data/`, creada al iniciar. El ZIP no incluye partidas personales ni de pruebas. Las pruebas de API y navegador usan carpetas temporales independientes.
 
-Se verificó la sintaxis de los scripts, el arranque del servidor, la lógica de caída alta y una simulación de física con el camino de ascenso completo, además del recorrido automático hasta la cafetera. **No se validaron visualmente todos los ángulos de cámara ni el rendimiento en un dispositivo real**: hace falta jugarlo en navegador para ajustar saltos, sensibilidad y colisiones decorativas. Los muebles están construidos con formas básicas y detalles estilizados, no con modelos PBR de calidad comercial.
+## Editar y probar
+
+- `src/game.js`: motor, cocina, HUD, enemigos y telemetría compartidos.
+- `src/physics.js`: física y superficies de la cocina.
+- `src/office-physics.js`: superficies, colisiones, viento y cables de oficina.
+- `src/office-scene.js`: mobiliario y aspecto de la oficina.
+- `build.js`: combina el motor y la escena, empaqueta ambos HTML autónomos y genera `public/levels.json` para el dashboard.
+- `src/office-game.generated.js`: archivo generado; no editar directamente.
+
+Tras editar: `npm run build` o `node build.js`. El antiguo `rebuild.py` ahora llama al mismo empaquetador.
+
+Pruebas sin dependencias: `npm test`. Pruebas opcionales de navegador: instala Playwright (`npm install --no-save playwright`, `npx playwright install chromium`) y ejecuta `npm run test:browser`. También puedes proporcionar `PLAYWRIGHT_MODULE` y `COFFEE_BROWSER` para usar instalaciones existentes.
+
+Consulta **PRUEBAS.md** para el alcance de la validación y **DISENO_NIVEL_02.md** para detalles del nivel.
+
+## Procedencia y alcance
+
+Base: repositorio FernandoRizo/CoffePlease, rama main, commit `dba3d79a43f833971af2426d0b43d1b9bd352522` (v1.1). El chat previo permitió recuperar el plano image(5).png, pero no el ZIP CoffeePlease_Niveles_1_y_2_v1.2.zip. Por ello esta entrega reconstruye las funciones descritas de la v1.2 sobre la base disponible; no es una modificación de aquel ZIP.
+
+Arte 3D procedural estilizado. Los volúmenes principales de muebles y paneles tienen colisión simplificada; teclados, libros, grifo y otros detalles son decorativos. Se probó con Microsoft Edge en escritorio y vista móvil emulada. No se ha medido el rendimiento en teléfonos físicos. No se ha publicado esta versión en GitHub.

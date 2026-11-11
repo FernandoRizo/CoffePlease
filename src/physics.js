@@ -20,10 +20,7 @@ export const platforms=[
   {x:5.25,y:.75,z:-2.2,w:1.90,d:1.70,name:'Caja baja'},                       // 13
   {x:6.65,y:1.45,z:-3.2,w:1.70,d:1.70,name:'Caja de provisiones',checkpointRank:2},//14
   {x:8.12,y:2.20,z:-3.72,w:2.15,d:1.90,name:'Taburete',checkpointRank:3},      // 15
-  {x:9.45,y:2.70,z:-5.0,w:2.30,d:1.35,name:'Cajón entreabierto',checkpointRank:4},//16
-  {x:-7.35,y:.70,z:-2.1,w:1.90,d:1.85,name:'Caja junto a la alacena'},       // 17
-  {x:-8.35,y:1.45,z:-3.3,w:1.85,d:1.75,name:'Taburete auxiliar'},             // 18
-  {x:-9.3,y:2.40,z:-4.93,w:2.10,d:1.35,name:'Cajón auxiliar',checkpointRank:2}//19
+  {x:9.45,y:2.70,z:-5.0,w:2.30,d:1.35,name:'Cajón entreabierto',checkpointRank:4}//16
 ];
 export const FLOOR_PUDDLE={x:0.7,z:-1.55,r:1.2};
 export const FLOOR_CRUMBS={x:-4.1,z:-.2,r:.88};

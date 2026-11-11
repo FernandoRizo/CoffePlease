@@ -193,7 +193,7 @@ for(let i=0;i<18;i++){const a=i*2.4,r=.12+Math.sqrt(i/18)*FLOOR_CRUMBS.r;
 // Señales breves. No se llena la cocina de iconos flotantes.
 label('BAJA POR LA SILLA',-1.00,4.38,3.65,3,'#4a7459');
 label('SUBE POR LAS CAJAS',7.45,3.65,-2.45,3,'#4a7459');
-for(const route of [[0,1,2],[13,14,15,16,11],[17,18,19,10]])for(let j=0;j<route.length-1;j++){
+for(const route of [[0,1,2],[13,14,15,16,11]])for(let j=0;j<route.length-1;j++){
  const a=platforms[route[j]],b=platforms[route[j+1]];
  const direction=new THREE.Vector3(b.x-a.x,0,b.z-a.z).normalize();
  const arrow=new THREE.ArrowHelper(direction,new THREE.Vector3(a.x,a.y+.075,a.z),.72,0x547d58,.2,.15);
@@ -394,7 +394,7 @@ function start(isAuto=false){telSend();auto=isAuto;yaw=Math.PI/2;pitch=.48;headi
 function home(){telSend();resetMug(true);state='intro';auto=false;keys.clear();clearFragments();player=createPlayer();fill=0;cup.visible=true;liquid.visible=false;stream.visible=false;steam.forEach(s=>s.visible=false);$('intro').hidden=false;$('hud').hidden=true;$('overlay').hidden=true;$('touchControls').hidden=true;document.body.classList.remove('playing');goalGuide.hidden=true;}
 function pause(){if(state==='paused'){state=previousState;$('overlay').hidden=true;return;}if(!['playing','dead','serving'].includes(state))return;previousState=state;state='paused';keys.clear();jumpQueued=false;$('resultEyebrow').textContent='UN MOMENTO PARA RESPIRAR';$('resultTitle').textContent='En pausa.';$('resultText').textContent='Tu café puede esperar un momento.';$('resume').innerHTML='Continuar <span>↗</span>';$('overlay').hidden=false;}
 function die(reason){state='dead';deaths++;TEL.last=reason;if(reason==='caída'||reason==='caída alta')mug.falls++;if(reason==='hp'){dustBurst(player.x,player.y+.4,player.z,26);shake=.8;}deathTimer=1.15;cup.visible=false;notify(reason==='hp'?'¡La taza se rompió! Volvemos al último punto de control.':reason==='caída alta'?'¡Caída demasiado alta! La taza se rompió. Baja usando los muebles.':reason==='caída'?'¡Te caíste fuera de la cocina!':'¡Ups! Volvemos al último punto de control.');for(let i=0;i<18;i++){const m=mesh(shardGeo,M.green,player.x,Math.max(player.y,.1)+.3,player.z);m.scale.set(.6+Math.random(),.6+Math.random(),.6+Math.random());fragments.push({mesh:m,v:new THREE.Vector3((Math.random()-.5)*4,2+Math.random()*3,(Math.random()-.5)*4)});}}
-function win(){state='won';stream.visible=false;$('resultEyebrow').textContent=auto?'RECORRIDO COMPLETADO':'MISIÓN CUMPLIDA';$('resultTitle').textContent='Ahora sí, un café.';$('resultText').textContent=`Llegaste en ${clockText(elapsed)} con ${deaths} ${deaths===1?'ruptura':'rupturas'}. Tu taza está llena y la aventura está completa.`;$('resume').innerHTML='Jugar de nuevo <span>↗</span>';showScore();telSend('fetch','victoria');$('overlay').hidden=false;}
+function win(){state='won';stream.visible=false;$('resultEyebrow').textContent=auto?'RECORRIDO COMPLETADO':'MISIÓN CUMPLIDA';$('resultTitle').textContent='Ahora sí, un café.';$('resultText').textContent=`Llegaste en ${clockText(elapsed)} con ${deaths} ${deaths===1?'ruptura':'rupturas'}. Tu taza está llena. Ahora te espera la oficina.`;$('resume').innerHTML='Continuar a la oficina <span>↗</span>';showScore();telSend('fetch','victoria');$('overlay').hidden=false;}
 function input(){
  if(auto)return autoInput(player);
  const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
@@ -459,7 +459,7 @@ function render(now){requestAnimationFrame(render);const dt=Math.min((now-last)/
  renderer.render(scene,camera);
 }
 camera.position.set(7,13,22);camTarget.set(-1.7,3,-3.2);requestAnimationFrame(render);
-$('play').onclick=()=>start();$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('restart').onclick=()=>start(auto);$('resume').onclick=()=>state==='won'?start():pause();$('home').onclick=home;
+$('play').onclick=()=>start();$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('restart').onclick=()=>start(auto);$('resume').onclick=()=>state==='won'?nextLevel():pause();$('home').onclick=home;
 $('help').onclick=()=>{if(['playing','dead','serving'].includes(state))pause();$('helpDialog').showModal();};$('closeHelp').onclick=()=>$('helpDialog').close();
 const movement=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyQ','KeyE']);
 addEventListener('keydown',e=>{if($('helpDialog').open||e.target instanceof HTMLButtonElement&&['Space','Enter'].includes(e.code))return;if(movement.has(e.code)){if(state==='intro')return;e.preventDefault();keys.add(e.code);if(e.code==='Space'&&!e.repeat)jumpQueued=true;}if(!e.repeat){if(e.code==='KeyC'){yaw=Math.PI/2;pitch=.48;}if(e.code==='KeyP'||e.code==='Escape')pause();if(e.code==='KeyR'&&state!=='intro')start(auto);}});
@@ -477,3 +477,5 @@ renderer.domElement.addEventListener('pointerdown',e=>{if(state!=='playing'||aut
 renderer.domElement.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId||state!=='playing')return;yaw-=(e.clientX-drag.x)*.006;pitch=THREE.MathUtils.clamp(pitch+(e.clientY-drag.y)*.004,.2,1.05);drag.x=e.clientX;drag.y=e.clientY;});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>drag=null);
 renderer.domElement.addEventListener('wheel',e=>{if(state!=='playing')return;e.preventDefault();cameraDistance=THREE.MathUtils.clamp(cameraDistance+e.deltaY*.004,3.5,9);},{passive:false});
+
+function nextLevel(){location.href=new URL(location.protocol==='file:'?'../oficina/index.html':'../oficina/',location.href).href;}

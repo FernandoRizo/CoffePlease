@@ -1,0 +1,4 @@
+https://github.com/FernandoRizo/CoffePlease
+main: dba3d79a43f833971af2426d0b43d1b9bd352522
+Versión base: 1.1.0
+Entrega: 1.3.0
