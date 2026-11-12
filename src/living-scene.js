@@ -161,12 +161,6 @@ for(const p of POTS){
   bl.scale.set(.66,1.45,.5);bl.rotation.z=Math.cos(a)*.42;
  }
 }
-const TOP=platforms[GOAL_INDEX];
-box(TOP.w,TOP.y-TV.y-.1,TOP.d,wood,TOP.x,TV.y+(TOP.y-TV.y-.1)/2,TOP.z);
-box(TOP.w+.02,.18,TOP.d+.02,shelfTop,TOP.x,TOP.y-.09,TOP.z);
-for(const side of [-1,1]){
- box(.12,2.9,.14,iron,TOP.x+side*(TOP.w/2-.15),4,TOP.z-TOP.d/2+.11);
-}
 // La cafetera está en el piso superior, junto a su plato de llegada.
 box(1.65,1.75,.76,M.dark,GP.x,GP.y+.89,GP.z-.72);
 box(1.78,.29,.90,M.green,GP.x,GP.y+1.88,GP.z-.65);
