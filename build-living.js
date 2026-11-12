@@ -7,7 +7,7 @@ const a=game.indexOf('// === UNA COCINA'),b=game.indexOf('// Perfil de taza');
 if(a<0||b<a)throw Error('No se encontró el bloque de escena del motor.');
 let living=game.slice(0,a)+read('src/living-scene.js')+'\n'+game.slice(b);
 const replace=(before,after,required=true)=>{if(!living.includes(before)){if(required)throw Error('Marcador ausente: '+before.slice(0,90));return;}living=living.replace(before,after);};
-replace('FLOOR_CRUMBS}', 'FLOOR_CRUMBS,onGlue,GLUE,POTS,vacuumAt,hitsVacuum,catAt,catHit,FANS,fanAt,fanForce}');
+replace('FLOOR_CRUMBS}', 'FLOOR_CRUMBS,onGlue,GLUE,POTS,vacuumAt,hitsVacuum,catAt,catHit,FANS,fanAt,fanForce,BOOK_TRAPS,bookTrapAt,bookHitAt}');
 const la=living.indexOf('// Iluminación ambiental'),lb=living.indexOf('const shellM=',la);
 if(la<0||lb<la)throw Error('No se encontró bloque de luces/efectos de la cocina.');
 living=living.slice(0,la)+`const goalL=new THREE.PointLight('#ffe8c6',23,10,2);goalL.position.set(GP.x,GP.y+2,GP.z);scene.add(goalL);\n`+living.slice(lb);
@@ -21,6 +21,14 @@ living=living.slice(0,fxA)+`function fxExtra(dt){
  const c=catAt(worldTime);livingCat.position.set(c.x,c.y,c.z);
  livingCat.rotation.y=c.zone==='floor'?Math.PI*.5:Math.sin(worldTime*1.3)*.35;
  catTail.rotation.z=Math.sin(worldTime*4)*.25;
+ // El mismo ciclo de física mueve cada libro y anuncia el disparo antes de empujar.
+ for(let i=0;i<livingBookTraps.length;i++){
+  const b=bookTrapAt(worldTime,i),v=livingBookTraps[i];
+  v.g.position.set(b.x,b.y,b.z);
+  v.g.rotation.x=b.mode==='out'?-.18*b.extension:0;
+  v.warn.visible=b.mode==='warning';
+  if(v.warn.visible)v.warn.material.opacity=.4+.4*Math.abs(Math.sin(worldTime*10+i));
+ }
  for(let i=0;i<livingFans.length;i++){
   const f=fanAt(worldTime,i),o=livingFans[i];
   o.head.rotation.y=f.angle;o.rotor.rotation.z+=dt*12;
@@ -38,12 +46,17 @@ replace(hit,`if(res.hit&&!auto){mug.hp=0;notify('¡La aspiradora atrapó a la ta
   if(res.cat.fatal){mug.hp=0;notify('¡El gato te empujó desde un mueble!');}
   else damage(res.cat.damage,dx/l*7,dz/l*7);
  }
+ if(res.book?.hit&&!auto&&worldTime>bookHitUntil){
+  const b=res.book;damage(b.damage,0,b.dirZ*13);
+  player.kz=b.dirZ*13;player.kt=.38;bookHitUntil=worldTime+1.25;
+  notify('¡LOS LIBROS SALIERON DEL ESTANTE! ¡Cuidado con la caída!');
+ }
  if(res.glue&&!glueHint){notify('¡PEGAMENTO! No puedes saltar y caminas más despacio.');glueHint=true;}
  if(!res.glue)glueHint=false;
  if(res.wind&&worldTime>windHintUntil){notify('¡VENTILADOR! ¡Aléjate del borde!');windHintUntil=worldTime+2.8;}`);
-replace('function postStep(res,dt){',`let glueHint=false,windHintUntil=0;
+replace('function postStep(res,dt){',`let glueHint=false,windHintUntil=0,bookHitUntil=0;
 function postStep(res,dt){`);
-replace('worldTime=0;player=createPlayer()', 'worldTime=0;glueHint=false;windHintUntil=0;player=createPlayer()');
+replace('worldTime=0;player=createPlayer()', 'worldTime=0;glueHint=false;windHintUntil=0;bookHitUntil=0;player=createPlayer()');
 replace('heat.material.opacity=.5+Math.sin(worldTime*4)*.15;', '');
 replace('rollingPin.rotation.z=worldTime*3;', 'rollingPin.rotation.y+=dt*.2;',false);
 replace('const mobile=innerWidth<700;desired.set(mobile?5:7,13,mobile?21:22);look.set(mobile?-1.5:-1.7,3.0,-3.2);',
@@ -68,8 +81,8 @@ let html=base.replace('Cocina abierta · Nivel 1','Sala de estar · Nivel 4')
  .replace('DEMO 03 · COCINA ABIERTA','NIVEL 04 · SALA DE ESTAR')
  .replace('UNA TAZA. UNA COCINA. UN DESTINO.','UNA TAZA. UNA SALA. UN DESTINO.')
  .replace('Primero, la aventura.<br>Después, <em>el café.</em>','Una sala peligrosa.<br>Y al final, <em>el café.</em>')
- .replace(/<p>Eres una taza[\s\S]*?<\/p>/,'<p>Recorre una sala de estar a escala de taza: dos sofás enfrentados, una mesita central, macetas y estanterías llenas de libros. Escala por las repisas laterales hasta el mueble del televisor y sube al segundo nivel para alcanzar la cafetera.</p>')
- .replace(/<p>Puedes <b>bajar[\s\S]*?<\/p>/,'<p>La aspiradora rompe la taza si te alcanza en el suelo. El gato te golpea fuerte y puede subir a los sofás o a la mesita: si te empuja desde ellos, la taza se rompe. En la parte alta, los ventiladores empujan hacia el vacío y el pegamento ralentiza y bloquea el salto. Usa los checkpoints y busca un camino seguro.</p>');
+ .replace(/<p>Eres una taza[\s\S]*?<\/p>/,'<p>Recorre una sala de estar a escala de taza: dos sofás enfrentados, una mesita central, macetas y estanterías llenas de libros. Escala por pilas de libros hacia los libreros anchos, esquiva los libros que salen disparados y camina por la repisa frente al televisor antes de trepar por más libros hasta la cafetera.</p>')
+ .replace(/<p>Puedes <b>bajar[\s\S]*?<\/p>/,'<p>La aspiradora rompe la taza si te alcanza en el suelo. El gato te golpea fuerte y puede subir a los sofás o a la mesita: si te empuja desde ellos, la taza se rompe. Los libros de los estantes avisan antes de sobresalir y pueden lanzarte al suelo. En la segunda repisa, los ventiladores empujan hacia el vacío y el pegamento ralentiza y bloquea el salto. Usa los checkpoints y busca un camino seguro.</p>');
 let [i,j,pack]=findPack(html);
 html=html.slice(0,i)+JSON.stringify({...pack,game:encode(living+hook),physics:encode(read('src/living-physics.js'))})+html.slice(j);
 write('public/sala/index.html',html);write('src/living-game.generated.js',living);
@@ -88,7 +101,7 @@ write('public/obra/index.html',obra);write('src/construction-game.generated.js',
 (async()=>{
  let layouts=JSON.parse(read('public/levels.json'));
  const m=await import('data:text/javascript;base64,'+encode(read('src/living-physics.js')));
- layouts['sala-04-estar']={platforms:m.platforms,walls:[],pots:m.POTS,glue:m.GLUE,fans:m.FANS};
+ layouts['sala-04-estar']={platforms:m.platforms,walls:[],pots:m.POTS,glue:m.GLUE,fans:m.FANS,bookTraps:m.BOOK_TRAPS};
  write('public/levels.json',JSON.stringify(layouts));
  console.log('Nivel 04 listo: /sala/; transición obra → sala y levels.json');
 })().catch(e=>{console.error(e);process.exitCode=1});

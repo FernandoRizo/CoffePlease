@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feat/nivel04-sala-estar-gato-ventiladores
+      - feat/nivel04-libreros-libros-tv-v17
   workflow_dispatch:
 permissions:
   contents: write
@@ -25,6 +26,10 @@ jobs:
           test -s public/sala/index.html
           grep -q 'sala-04-estar' public/levels.json
           node -e "const fs=require('fs');const s=fs.readFileSync('public/obra/index.html','utf8');const a=s.indexOf('const payload=')+14,b=s.indexOf(';',a);const p=JSON.parse(s.slice(a,b));if(!Buffer.from(p.game,'base64').toString().includes('Continuar a la sala'))process.exit(1)"
+      - name: Validate generated browser JavaScript
+        run: |
+          node --input-type=module --check < src/living-game.generated.js
+          node -e "const fs=require('fs');const s=fs.readFileSync('public/sala/index.html','utf8');const a=s.indexOf('const payload=')+14,b=s.indexOf(';',a);const p=JSON.parse(s.slice(a,b));if(!Buffer.from(p.game,'base64').toString().includes('livingBookTraps'))process.exit(1)"
       - name: Commit generated browser bundle to feature branch
         run: |
           git config user.name "github-actions[bot]"
