@@ -1,16 +1,17 @@
 {
   "name": "coffee-please-telemetria",
   "version": "1.6.0",
-  "description": "Coffee Please — nivel 1 con repisas del refrigerador y latas que caen",
+  "description": "Coffee Please — cuatro niveles, métricas de juego y despliegue en Railway",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",
-    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs",
-    "build": "node build.js && node build-construction.js",
+    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node --test tests/living.test.mjs",
+    "build": "node build.js && node build-construction.js && node build-living.js",
     "test:api": "node tests/api.test.mjs",
     "test:browser": "node tests/browser.test.cjs",
-    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs",
-    "test:construction": "node --test tests/construction.test.mjs"
+    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs && node --test tests/living.test.mjs",
+    "test:construction": "node --test tests/construction.test.mjs",
+    "test:living": "node --test tests/living.test.mjs"
   },
   "engines": {
     "node": ">=18"
