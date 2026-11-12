@@ -15,7 +15,7 @@ test('dos sofás enfrentados, mesita, bibliotecas laterales y mueble doble',()=>
  const tv=P.platforms[18];assert.ok(tv.d>=7&&tv.w<=2.3,'repisa larga pero angosta frente al TV');
  const top=P.platforms[P.GOAL_INDEX];assert.ok(top.w>=5&&top.d>=5);
  assert.ok(P.GLUE.every(g=>g.y===top.y));
- assert.ok(P.FANS.every(f=>f.y>top.y);
+ assert.ok(P.FANS.every(f=>f.y>top.y));
 });
 test('macetas tienen colisión y no bloquean saltos por encima',()=>{
  const pot=P.POTS[0],p=P.createPlayer(P.FLOOR_INDEX);
