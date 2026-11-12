@@ -72,3 +72,11 @@ La taza comienza en un andamio alto, desciende por palés y debe atravesar un te
 ## v1.5 — Cruces de vigas colapsables
 
 El nivel 3 elimina el antiguo corredor seguro mediante dos excavaciones transversales que bloquean el paso por el suelo en toda la anchura. Cada una se supera con cuatro vigas estrechas de madera que empiezan a temblar al pisarlas, se caen a los 1.7–2.05 segundos y reaparecen 5 segundos después. También hay baches, más huecos mortales y peligros recolocados. Se mantienen los niveles 1 y 2, la transición y la telemetría. Revisa `DISENO_NIVEL_03.md`, ejecuta `npm run build` y `npm run test:construction`.
+
+## v1.6 — Cocina: del refrigerador a la cafetera
+
+La subida corta de cajas/taburete/cajón situada a la derecha se sustituyó por una travesía obligatoria por la izquierda: `mesa → silla → banco → suelo → repisas laterales → techo del refrigerador → repisas de pared → panera → encimeras → cafetera`. El suelo sigue abierto; no hay plataformas de ascenso directo bajo la cafetera.
+
+Cinco estaciones bajo las alacenas anuncian la caída de una lata con un círculo luminoso durante 1.05 s. La lata se desplaza desde la alacena y cae físicamente; un impacto descendente sobre la cabeza rompe la taza instantáneamente y provoca reaparición en el checkpoint. Puedes esquivar las zonas señaladas; las latas no se activan en la demostración guiada.
+
+Se conservan la cocina original, los enemigos, el horno/quemador, el suelo, el nivel 2, el nivel 3 y sus métricas. El dashboard refleja las nuevas repisas y puntos de impacto. `npm run build` reconstruye los tres niveles; `npm test` ejecuta pruebas de física y API. Para validar la cámara y la señal visual de las latas, prueba `/juego/` en un navegador con WebGL.

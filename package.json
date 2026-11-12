@@ -1,7 +1,7 @@
 {
   "name": "coffee-please-telemetria",
-  "version": "1.5.0",
-  "description": "Coffee Please — nivel 3 con excavaciones y vigas que se desploman",
+  "version": "1.6.0",
+  "description": "Coffee Please — nivel 1 con repisas del refrigerador y latas que caen",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",
