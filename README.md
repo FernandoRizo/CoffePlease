@@ -80,3 +80,11 @@ La subida corta de cajas/taburete/cajón situada a la derecha se sustituyó por 
 Cinco estaciones bajo las alacenas anuncian la caída de una lata con un círculo luminoso durante 1.05 s. La lata se desplaza desde la alacena y cae físicamente; un impacto descendente sobre la cabeza rompe la taza instantáneamente y provoca reaparición en el checkpoint. Puedes esquivar las zonas señaladas; las latas no se activan en la demostración guiada.
 
 Se conservan la cocina original, los enemigos, el horno/quemador, el suelo, el nivel 2, el nivel 3 y sus métricas. El dashboard refleja las nuevas repisas y puntos de impacto. `npm run build` reconstruye los tres niveles; `npm test` ejecuta pruebas de física y API. Para validar la cámara y la señal visual de las latas, prueba `/juego/` en un navegador con WebGL.
+
+## v1.7 — Sala de estar: libreros anchos, libros trampa y TV de dos niveles
+
+El nivel 4 sustituye los escalones de madera por **pilas de libros con colisión** a ambos lados de la sala. Los dos libreros son ahora muebles de 4.8 unidades de ancho y 2.6 de fondo, con baldas, laterales, trasera y colecciones de libros visibles. Al llegar arriba, cuatro grupos de libros retráctiles (dos por librero) advierten durante 0.9 segundos antes de avanzar hacia el borde: un contacto produce daño y un empujón que puede hacer caer la taza desde gran altura. Los libros se retraen y sus relojes están desfasados.
+
+El mueble final se amplió para albergar una TV grande orientada hacia los sofás, con una **repisa estrecha obligatoria frente a la pantalla**. El jugador pasa frente al televisor y después utiliza tres pilas de libros como escalones hasta la repisa superior, donde permanecen los ventiladores, el pegamento y la cafetera. La ruta guiada atraviesa ambas mitades de la repisa del televisor antes de subir.
+
+Se preservan niveles 1–3, aspiradora, gato, checkpoints, transición obra→sala y telemetría `sala-04-estar`. El mapa del dashboard incluye libreros, pegamento, ventiladores y trampas de libros. `npm run build` genera todos los HTML y `npm test` ejecuta las pruebas del nuevo nivel.

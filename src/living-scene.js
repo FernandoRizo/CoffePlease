@@ -58,41 +58,100 @@ for(const i of [0,1]){
   box(.16,q.y-.18,.16,wood,q.x+sx*(q.w/2-.22),(q.y-.18)/2,q.z+sz*(q.d/2-.22));
  }
 }
-// Escalerillas naturales a los lados: libros, repisas y estructuras de madera.
-for(let i=6;i<=23;i++){
- if([18].includes(i))continue;const q=platforms[i];
- if(q.kind==='bookcase'){
-  box(q.w,q.y,q.d,wood,q.x,q.y/2,q.z);
-  for(const x of [-1,1])box(.10,q.y,.10,woodDark,q.x+x*(q.w/2-.07),q.y/2,q.z+q.d/2-.08);
-  for(let y=.80;y<q.y;y+=.70){
-   box(q.w-.15,.11,q.d-.08,oak,q.x,y,q.z);
-   for(let n=0;n<5;n++){
-    const c=['#6b8f8b','#c88c70','#c0a879','#8893b6','#d8b88a'][n];
-    box(.23,.48+(n%3)*.09,.37,mat(c),q.x-.86+n*.43,y+.29,q.z+.24);
-   }
-  }
-  box(q.w,.16,q.d,shelfTop,q.x,q.y-.08,q.z);
- }else if(q.kind==='shelf'||q.kind==='ledge'){
-  box(q.w,.16,q.d,shelfTop,q.x,q.y-.08,q.z);
-  for(const d of [-.33,.33]){
-   box(.14,.50,.14,iron,q.x-q.w/2+.16,q.y-.37,q.z+d);
-   box(.45,.12,.14,iron,q.x-q.w/2+.32,q.y-.54,q.z+d);
-  }
- }else if(q.kind==='step'){
-  box(q.w,q.y-.08,q.d,oak,q.x,(q.y-.08)/2,q.z);
-  box(q.w,.14,q.d,shelfTop,q.x,q.y-.07,q.z);
+// Bibliotecas anchas, profundas y con baldas reales. Las pilas jugables son libros,
+// no plataformas rectangulares independientes de la ambientación.
+const bookColors=['#456a77','#b35f4b','#c59c5a','#687e54','#8e6c91','#d3b787'];
+const bookMaterials=bookColors.map(c=>mat(c));
+const bookBands=mat('#e2cda7'),spines=mat('#e9cd83');
+function stackOfBooks(q,i){
+ const layers=Math.max(3,Math.ceil(q.y/.37)),h=q.y/layers;
+ for(let j=0;j<layers;j++){
+  const k=(j*3+i)%bookMaterials.length,w=q.w*(.82+.035*(j%3)),d=q.d*(.80+.035*(j%2));
+  const bk=box(w,h*.88,d,bookMaterials[k],q.x+((j%3)-1)*.075,(j+.5)*h,q.z+((j%2)?-.06:.06));
+  bk.rotation.y=(((j*13+i*7)%9)-4)*.025;
+  box(w+.012,.035,d+.012,bookBands,bk.position.x,(j+.5)*h+h*.40,bk.position.z).rotation.y=bk.rotation.y;
+  if(j%3===0)box(w*.45,.02,.04,spines,bk.position.x,(j+.5)*h,bk.position.z+d*.41);
  }
+ // La cubierta del libro superior coincide exactamente con la plataforma de física.
+ box(q.w-.05,.10,q.d-.05,bookMaterials[(i+3)%bookMaterials.length],q.x,q.y-.05,q.z);
 }
-// Mueble de dos pisos: TV abajo, cafetería arriba, con repisas laterales para escalar.
-const TV=platforms[18];
-box(TV.w,TV.y-.12,TV.d,woodDark,TV.x,(TV.y-.12)/2,TV.z);
-box(TV.w,.20,TV.d,oak,TV.x,TV.y-.10,TV.z);
-for(const z of [-1.35,0,1.35]){box(.08,1.8,.09,wood,TV.x-1.9,1.5,z);box(.15,.07,.25,iron,TV.x-1.9,2.2,z);}
-box(2.65,1.61,.16,tvBlack,13.75,3.58,-2.10);
-box(2.37,1.33,.05,mat('#74a4ae',.28),13.75,3.58,-2.0);
-box(.13,.39,.12,iron,13.75,2.65,-2.01);
-box(1.7,.07,.55,iron,13.75,2.55,-2.0);
-for(const xx of [12.1,15.4])box(.68,.68,.48,wood,xx,2.91,-2.0);
+function realBookcase(q,north){
+ const face=q.z+(north?1:-1)*(q.d/2-.09),back=q.z-(north?1:-1)*(q.d/2-.08);
+ // Laterales, espalda y estantes internos, con objetos que parecen libros colocados.
+ box(q.w,.16,q.d,wood,q.x,q.y-.08,q.z);
+ box(q.w,q.y,.15,woodDark,q.x,q.y/2,back);
+ for(const dx of [-1,1])box(.19,q.y,q.d,wood,q.x+dx*(q.w/2-.095),q.y/2,q.z);
+ for(let y=.62;y<q.y-.15;y+=.70){
+  box(q.w-.24,.13,q.d-.20,oak,q.x,y,q.z);
+  for(let n=0;n<11;n++){
+   const color=bookMaterials[(n+Math.floor(y*5)+(north?1:2))%bookMaterials.length];
+   const xx=q.x-q.w/2+.43+n*(q.w-.86)/11;
+   const h=.40+(n%4)*.04;
+   box(.25,h,.60,color,xx,y+.065+h/2,face+(north?-.43:.43));
+   if(n%3===1)box(.012,h*.62,.42,bookBands,xx+.13,y+.065+h/2,face+(north?-.43:.43));
+  }
+ }
+ // Molduras de remate. La parte superior es la repisa segura del librero.
+ box(q.w+.12,.16,q.d+.10,shelfTop,q.x,q.y-.08,q.z);
+ box(q.w+.08,.16,.16,woodDark,q.x,q.y-.16,face);
+}
+for(let i=6;i<=23;i++){
+ if(i===18)continue;const q=platforms[i];
+ if(q.kind==='bookcase')realBookcase(q,q.z<0);
+ else if(q.kind==='bookStep')stackOfBooks(q,i);
+}
+// Los libros que sobresalen en los libreros son móviles: su modelo sigue
+// bookTrapAt(), la misma función determinista empleada para calcular el choque.
+const livingBookTraps=[];
+for(let i=0;i<BOOK_TRAPS.length;i++){
+ const t=BOOK_TRAPS[i],g=new THREE.Group();scene.add(g);g.position.set(t.x,t.y,t.z);
+ for(let j=0;j<3;j++){
+  const bk=box(.48,.37,.32,bookMaterials[(i*2+j)%bookMaterials.length],(j-1)*.15,.11,0,g);
+  bk.rotation.z=(j-1)*.06;
+  box(.30,.027,.35,bookBands,(j-1)*.15,.30,0,g);
+ }
+ const warnMat=new THREE.MeshBasicMaterial({color:'#f5a432',transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide});
+ const warn=mesh(new THREE.RingGeometry(.42,.62,28),warnMat,t.x,platforms[t.z<0?10:15].y+.055,t.z);warn.rotation.x=-Math.PI/2;warn.visible=false;warn.castShadow=false;
+ livingBookTraps.push({g,warn,t});
+}
+label('¡LIBROS QUE SALEN! ESPERA EL MOMENTO',7.5,5.5,-7.9,5.6,'#7e4124');
+label('¡LIBROS QUE SALEN! ESPERA EL MOMENTO',7.5,5.5,7.9,5.6,'#7e4124');
+// Mueble de TV ensanchado: el televisor ocupa un hueco creíble en el piso bajo.
+// La repisa frontal (TV) está señalada y tiene su propia geometría de colisión.
+// El resto del mueble soporta el estante superior y forma el volumen decorativo.
+const TV=platforms[18],cabinetX=13.85,cabinetW=7.25,cabinetD=8.15;
+box(cabinetW,2.33,cabinetD,woodDark,cabinetX,1.165,0);
+box(cabinetW,.19,cabinetD,oak,cabinetX,2.36,0);
+for(const side of [-1,1]){
+ box(.16,2.5,.18,wood,cabinetX+side*(cabinetW/2-.20),1.25,-cabinetD/2+.2);
+ box(.16,2.5,.18,wood,cabinetX+side*(cabinetW/2-.20),1.25,cabinetD/2-.2);
+}
+for(const z of [-2.75,2.75])box(cabinetW-.12,.17,.11,shelfTop,cabinetX,2.42,z);
+// Repisa peatonal obligatoria a lo largo de toda la cara del televisor.
+box(TV.w,.22,TV.d,light,TV.x,TV.y-.11,TV.z);
+for(const z of [-3.1,0,3.1])box(TV.w,.035,.08,iron,TV.x,TV.y+.016,z);
+label('PASA FRENTE AL TELEVISOR',TV.x-1.25,TV.y+1.15,0,4.5,'#4b675b');
+// Pantalla mirando a los sofás (orientación sobre el plano Y-Z): ningún borde
+// del televisor invade la franja jugable frontal (x ≈ 11.2).
+box(.23,2.20,4.9,tvBlack,12.60,3.77,.55);
+box(.035,1.99,4.58,mat('#6e9ba7',.25),12.46,3.77,.55);
+for(const z of [-1.25,2.35])box(.2,.32,.22,iron,12.58,2.75,z);
+box(.4,.10,3.9,iron,12.58,2.58,.55);
+for(const z of [-2.55,3.10]){
+ box(.70,.70,.6,wood,12.78,2.90,z);
+ box(.47,.47,.065,iron,12.40,2.90,z);
+}
+// Adornos discretos en el mueble, alejados de la ruta de la taza.
+for(let i=0;i<4;i++)box(.38,.12,.42,bookMaterials[(i+3)%bookMaterials.length],14.4,2.57,-2.7+i*.37);
+// La subida de la TV al nivel superior se hace sobre las pilas 19/20/21.
+const TOP=platforms[GOAL_INDEX];
+for(const z of [-2.9,1.85])for(const x of [12.20,16.9]){
+ box(.22,TOP.y-2.55,.22,wood,x,(TOP.y+2.55)/2,z);
+}
+box(TOP.w,.20,TOP.d,shelfTop,TOP.x,TOP.y-.10,TOP.z);
+for(const z of [-3.0,2.0])box(TOP.w,.11,.14,woodDark,TOP.x,TOP.y-.22,z);
+// La segunda repisa aloja los ventiladores y el pegamento, por delante
+// de la cafetera (no se elimina ninguna de sus dos zonas peligrosas).
 // Un adorno y una planta en el primer piso, con colisión física real.
 for(const p of POTS){
  cylinder(p.r*.95,p.r*.78,.50,potClay,p.x,p.y+.25,p.z);
@@ -169,8 +228,8 @@ for(let i=0;i<FANS.length;i++){
 }
 label('INICIO · BAJA POR EL BANQUITO',platforms[0].x,platforms[0].y+1.65,platforms[0].z,4.8,'#53402f');
 label('SOFÁS Y MESITA · ¡CUIDADO CON EL GATO!',-6.2,3.7,0,6,'#563b32');
-label('SUBE POR LOS LIBREROS',4.9,4.7,8.2,4.6,'#315f54');
-label('SUBE POR LOS LIBREROS',4.9,4.7,-8.2,4.6,'#315f54');
-label('TV · NIVEL INFERIOR',13.3,4.7,-1.8,4,'#31515b');
+label('TREPA POR LOS LIBROS',3.9,4.7,6.6,4.8,'#315f54');
+label('TREPA POR LOS LIBROS',3.9,4.7,-6.6,4.8,'#315f54');
+label('TV · REPISA FRONTAL',11.0,4.2,-1.8,4,'#31515b');
 label('META · CAFÉ EN LA SALA',GP.x,GP.y+3.0,GP.z,4.2,'#315f54');
 const heat={material:{opacity:0}}; // Contrato con el render del motor compartido.
