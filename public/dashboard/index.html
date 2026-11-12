@@ -61,10 +61,11 @@ function base(){
  for(const t of layout.trenches||[]){cx.fillStyle='#44372d';cx.fillRect(px(t.x-t.w/2),pz(-11),t.w*S,22*S);}
  for(const pit of layout.pits||[]){cx.beginPath();cx.arc(px(pit.x),pz(pit.z),pit.r*S,0,Math.PI*2);cx.fillStyle='#3b322d';cx.fill();cx.strokeStyle='#e89b28';cx.lineWidth=3;cx.stroke();}
  for(const oil of layout.oil||[]){cx.beginPath();cx.arc(px(oil.x),pz(oil.z),oil.r*S,0,Math.PI*2);cx.fillStyle='#232628';cx.fill();}
- for(const p of layout.platforms){if(p.floor)continue;cx.fillStyle=p.goal?'#5e926f':p.start?'#9fbec5':p.kind==='bookcase'?'#856044':p.kind==='fragile'?'#cf833c':p.kind==='chair'?'#467c78':'#cba275';cx.strokeStyle='#617a70';cx.lineWidth=1;
+ for(const p of layout.platforms){if(p.floor)continue;cx.fillStyle=p.goal?'#5e926f':p.start?'#9fbec5':p.kind==='bookcase'?'#856044':p.kind==='fragile'?'#cf833c':p.kind==='fridge'?'#e7dfcf':p.kind==='wallShelf'||p.kind==='shelf'?'#b88754':p.kind==='chair'?'#467c78':'#cba275';cx.strokeStyle='#617a70';cx.lineWidth=1;
  cx.fillRect(px(p.x-p.w/2),pz(p.z-p.d/2),p.w*S,p.d*S);cx.strokeRect(px(p.x-p.w/2),pz(p.z-p.d/2),p.w*S,p.d*S);
  cx.fillStyle='#243c33';cx.font='9px system-ui';cx.textAlign='center';if(p.w>2)cx.fillText(p.name,px(p.x),pz(p.z));}
  for(const w of layout.walls||[]){cx.fillStyle='#557c72';cx.fillRect(px(w.x-w.w/2),pz(w.z-w.d/2),w.w*S,w.d*S);}
+ for(const c of layout.cans||[]){cx.beginPath();cx.arc(px(c.x),pz(c.z),.36*S,0,Math.PI*2);cx.fillStyle='#e88342';cx.globalAlpha=.55;cx.fill();cx.globalAlpha=1;}
  const goal=layout.platforms.find(p=>p.goal),start=layout.platforms[0];cx.font='18px system-ui';cx.fillText('☕',px(goal.x),pz(goal.z)-10);cx.fillText('🚩',px(start.x),pz(start.z)-10);
  return true;
 }
