@@ -61,10 +61,12 @@ function base(){
  for(const t of layout.trenches||[]){cx.fillStyle='#44372d';cx.fillRect(px(t.x-t.w/2),pz(-11),t.w*S,22*S);}
  for(const pit of layout.pits||[]){cx.beginPath();cx.arc(px(pit.x),pz(pit.z),pit.r*S,0,Math.PI*2);cx.fillStyle='#3b322d';cx.fill();cx.strokeStyle='#e89b28';cx.lineWidth=3;cx.stroke();}
  for(const oil of layout.oil||[]){cx.beginPath();cx.arc(px(oil.x),pz(oil.z),oil.r*S,0,Math.PI*2);cx.fillStyle='#232628';cx.fill();}
- for(const p of layout.platforms){if(p.floor)continue;cx.fillStyle=p.goal?'#5e926f':p.start?'#9fbec5':p.kind==='bookcase'?'#795339':p.kind==='bookStep'?'#c69a69':p.kind==='tv'?'#e1d8c5':p.kind==='fragile'?'#cf833c':p.kind==='fridge'?'#e7dfcf':p.kind==='wallShelf'||p.kind==='shelf'?'#b88754':p.kind==='chair'?'#467c78':'#cba275';cx.strokeStyle='#617a70';cx.lineWidth=1;
+ for(const p of layout.platforms){if(p.floor)continue;cx.fillStyle=p.goal?'#5e926f':p.start?'#9fbec5':p.kind==='bookcase'?'#795339':p.kind==='bookStep'?'#c69a69':p.kind==='tv'?'#e1d8c5':p.kind==='water'?'#61b8c5':p.kind==='dish'||p.kind==='utensil'?'#f2efe4':p.kind==='counter'?'#be9873':p.kind==='fragile'?'#cf833c':p.kind==='fridge'?'#e7dfcf':p.kind==='wallShelf'||p.kind==='shelf'?'#b88754':p.kind==='chair'?'#467c78':'#cba275';cx.strokeStyle='#617a70';cx.lineWidth=1;
  cx.fillRect(px(p.x-p.w/2),pz(p.z-p.d/2),p.w*S,p.d*S);cx.strokeRect(px(p.x-p.w/2),pz(p.z-p.d/2),p.w*S,p.d*S);
  cx.fillStyle='#243c33';cx.font='9px system-ui';cx.textAlign='center';if(p.w>2)cx.fillText(p.name,px(p.x),pz(p.z));}
  for(const w of layout.walls||[]){cx.fillStyle='#557c72';cx.fillRect(px(w.x-w.w/2),pz(w.z-w.d/2),w.w*S,w.d*S);}
+ if(layout.water){const w=layout.water;cx.fillStyle='#459fb6';cx.globalAlpha=.70;cx.fillRect(px(w.x-w.w/2),pz(w.z-w.d/2),w.w*S,w.d*S);cx.globalAlpha=1;
+ for(const p of layout.platforms.filter(p=>p.kind==='dish'||p.kind==='utensil')){cx.fillStyle='#f8f3df';cx.strokeStyle='#4e8790';cx.beginPath();cx.arc(px(p.x),pz(p.z),p.w*S*.43,0,Math.PI*2);cx.fill();cx.stroke();}}
  for(const c of layout.cans||[]){cx.beginPath();cx.arc(px(c.x),pz(c.z),.36*S,0,Math.PI*2);cx.fillStyle='#e88342';cx.globalAlpha=.55;cx.fill();cx.globalAlpha=1;}
  for(const g of layout.glue||[]){cx.beginPath();cx.arc(px(g.x),pz(g.z),g.r*S,0,Math.PI*2);cx.fillStyle='#e7c64a';cx.globalAlpha=.38;cx.fill();cx.globalAlpha=1;}
  for(const t of layout.bookTraps||[]){cx.beginPath();cx.arc(px(t.x),pz(t.z),.20*S,0,Math.PI*2);cx.fillStyle='#e66a32';cx.fill();}

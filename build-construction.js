@@ -54,12 +54,12 @@ replace('function postStep(res,dt){', `let oilHint=false,beamHintUntil=0;\nfunct
 replace('worldTime=0;player=createPlayer()', 'worldTime=0;oilHint=false;beamHintUntil=0;player=createPlayer()');
 replace('let best=platforms[FLOOR_INDEX].y;', 'let best=groundHeight(x,z)??-2.9;');
 replace("'¡Te caíste fuera de la cocina!'", "'¡Caíste en un hoyo de la construcción!'");
-replace("'Una caída desde la mesa te rompe. ¡Baja por la silla!'", "'Baja por los palés, rodea los hoyos y evita el aceite. ¡Cuidado con la grúa!'");
+replace("'Baja por la silla izquierda y evita caer en el agua de la tarja.'", "'Baja por los palés, rodea los hoyos y evita el aceite. ¡Cuidado con la grúa!'");
 replace('bajar por la silla y subir hacia la cafetera','descender del andamio, cruzar la obra y subir a la mesita',false);
 replace('heat.material.opacity=.5+Math.sin(worldTime*4)*.15;','');
 replace('rollingPin.rotation.z=worldTime*3;', 'rollingPin.rotation.y=worldTime*.25;');
-replace('const mobile=innerWidth<700;desired.set(mobile?5:7,13,mobile?21:22);look.set(mobile?-1.5:-1.7,3.0,-3.2);', 'const mobile=innerWidth<700;desired.set(mobile?-13:-8,mobile?25:32,mobile?32:35);look.set(-4,1,0);');
-replace('camera.position.set(7,13,22);camTarget.set(-1.7,3,-3.2)', 'camera.position.set(-8,32,35);camTarget.set(-4,1,0)');
+replace('const mobile=innerWidth<700;desired.set(mobile?2:1,mobile?29:30,mobile?28:29);look.set(-1.8,1.3,-1.0);', 'const mobile=innerWidth<700;desired.set(mobile?-13:-8,mobile?25:32,mobile?32:35);look.set(-4,1,0);');
+replace('camera.position.set(1,30,29);camTarget.set(-1.8,1.3,-1)', 'camera.position.set(-8,32,35);camTarget.set(-4,1,0)');
 replace("level:'cocina-01-referencia'", "level:'obra-03-construccion'");
 replace('NIVEL 01 · COCINA DE CASA','NIVEL 03 · OBRA EN CONSTRUCCIÓN');
 replace("$('nextLevel').hidden=auto;$('resultEyebrow')", "$('nextLevel').hidden=true;$('resultEyebrow')",false);

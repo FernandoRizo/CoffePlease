@@ -88,3 +88,9 @@ El nivel 4 sustituye los escalones de madera por **pilas de libros con colisión
 El mueble final se amplió para albergar una TV grande orientada hacia los sofás, con una **repisa estrecha obligatoria frente a la pantalla**. El jugador pasa frente al televisor y después utiliza tres pilas de libros como escalones hasta la repisa superior, donde permanecen los ventiladores, el pegamento y la cafetera. La ruta guiada atraviesa ambas mitades de la repisa del televisor antes de subir.
 
 Se preservan niveles 1–3, aspiradora, gato, checkpoints, transición obra→sala y telemetría `sala-04-estar`. El mapa del dashboard incluye libreros, pegamento, ventiladores y trampas de libros. `npm run build` genera todos los HTML y `npm test` ejecuta las pruebas del nuevo nivel.
+
+## v1.8 · Cocina en L con tarja inundada
+
+El nivel 1 se rediseñó según el plano cenital del usuario: comedor en el sur, descenso por la silla izquierda, ascenso por repisas de pared, zona de limpieza y **fregadero lleno de agua** con cuatro plataformas de trastes/utensilios. Si la taza falla un salto sobre la tarja, se hunde y reaparece en el checkpoint anterior. Después recorre microondas, estufa, barra lateral, molino y cafetera. Se mantienen los enemigos y obstáculos anteriores. Las latas ahora caen en ubicaciones que corresponden a las nuevas alacenas.
+
+Fuentes: `src/physics.js`, `src/game.js`; documentación en `DISENO_NIVEL_01.md`. El dashboard muestra el agua en azul y los trastes como apoyos. Generar los cuatro niveles con `npm run build`, probar con `npm test` y abrir `http://localhost:3000/juego/`.

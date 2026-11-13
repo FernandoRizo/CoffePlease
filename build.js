@@ -2,6 +2,11 @@
 const fs=require('node:fs'),path=require('node:path');
 const root=__dirname,read=p=>fs.readFileSync(path.join(root,p),'utf8'),write=(p,s)=>fs.writeFileSync(path.join(root,p),s);
 let kitchen=read('public/juego/index.html');
+kitchen=kitchen
+ .replace('Cocina abierta · Nivel 1','Cocina en L · Nivel 1')
+ .replace('DEMO 03 · COCINA ABIERTA','NIVEL 01 · COCINA EN L')
+ .replace(/<p>Eres una taza[\s\S]*?<\/p>/,'<p>Eres una taza pequeña en una cocina enorme. Empieza sobre la mesa, baja por la silla de la izquierda y escala las repisas junto a la zona de limpieza. Cruza la tarja inundada saltando entre platos, una taza y utensilios. Continúa por el microondas, la estufa y la barra lateral hasta la cafetera.</p>')
+ .replace(/<p>Puedes <b>bajar[\s\S]*?<\/p>/,'<p>Para bajar de la mesa, usa la silla y el banco: una caída grande rompe la taza. Las repisas de la pared izquierda llevan a las encimeras. La <b>tarja está llena de agua</b>: solo puedes cruzarla saltando por los cuatro trastes. Si te hundes, reapareces en el último checkpoint. Conservas cucarachas, hormigas, estufa caliente, rodillo, charco y latas que caen de las alacenas. La cafetera está al final de la barra derecha.</p>');
 const a=kitchen.indexOf('const payload=')+14,b=kitchen.indexOf(';',a),vendor=JSON.parse(kitchen.slice(a,b));
 const encode=s=>Buffer.from(s).toString('base64');
 let game=read('src/game.js');
@@ -33,10 +38,10 @@ office=office.replace('rollingPin.rotation.z=worldTime*3;', 'rollingPin.rotation
 office=office.replace("level:'cocina-01-referencia'", "level:'oficina-02-plano'");
 office=office.replaceAll('NIVEL 01 · COCINA DE CASA','NIVEL 02 · LA OFICINA');
 office=office.replace('player=createPlayer();deaths=0','player=createPlayer();player.demo=isAuto;deaths=0');
-office=office.replace("'Una caída desde la mesa te rompe. ¡Baja por la silla!'", "'Baja del fregadero por la silla. Cruza el pasillo y escala las repisas.'");
+office=office.replace("'Baja por la silla izquierda y evita caer en el agua de la tarja.'", "'Baja del fregadero por la silla. Cruza el pasillo y escala las repisas.'");
 office=office.replace('bajar por la silla y subir hacia la cafetera','fregadero → pasillo → repisas → cafetera');
-office=office.replace("const mobile=innerWidth<700;desired.set(mobile?5:7,13,mobile?21:22);look.set(mobile?-1.5:-1.7,3.0,-3.2);", "const mobile=innerWidth<700;desired.set(mobile?4:3,mobile?46:37,mobile?44:34);look.set(0,0,0);");
-office=office.replace("camera.position.set(7,13,22);camTarget.set(-1.7,3,-3.2)","camera.position.set(3,37,34);camTarget.set(0,0,0)");
+office=office.replace("const mobile=innerWidth<700;desired.set(mobile?2:1,mobile?29:30,mobile?28:29);look.set(-1.8,1.3,-1.0);", "const mobile=innerWidth<700;desired.set(mobile?4:3,mobile?46:37,mobile?44:34);look.set(0,0,0);");
+office=office.replace("camera.position.set(1,30,29);camTarget.set(-1.8,1.3,-1)","camera.position.set(3,37,34);camTarget.set(0,0,0)");
 // La cocina continúa a la oficina; la oficina conserva el botón de volver a jugar.
 office=office.replace("state==='won'?nextLevel():pause()", "state==='won'?start():pause()");
 office=office.replace("$('resume').innerHTML='Continuar a la oficina <span>↗</span>'", "$('resume').innerHTML='Jugar de nuevo <span>↗</span>'");
@@ -61,7 +66,7 @@ console.log('Cocina y oficina empaquetadas.');
  const layouts={};
  for(const [id,file] of [['cocina-01-referencia','physics'],['oficina-02-plano','office-physics']]){
   const m=await import('data:text/javascript;base64,'+encode(read('src/'+file+'.js')));
-  layouts[id]={platforms:m.platforms,walls:m.WALLS||[]};
+  layouts[id]={platforms:m.platforms,walls:m.WALLS||[],water:m.WATER||null,cans:m.CAN_STATIONS||[]};
  }
  write('public/levels.json',JSON.stringify(layouts));
 })();
