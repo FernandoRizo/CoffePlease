@@ -59,9 +59,9 @@ function postStep(res,dt){`);
 replace('worldTime=0;player=createPlayer()', 'worldTime=0;glueHint=false;windHintUntil=0;bookHitUntil=0;player=createPlayer()');
 replace('heat.material.opacity=.5+Math.sin(worldTime*4)*.15;', '');
 replace('rollingPin.rotation.z=worldTime*3;', 'rollingPin.rotation.y+=dt*.2;',false);
-replace('const mobile=innerWidth<700;desired.set(mobile?5:7,13,mobile?21:22);look.set(mobile?-1.5:-1.7,3.0,-3.2);',
+replace('const mobile=innerWidth<700;desired.set(mobile?2:1,mobile?29:30,mobile?28:29);look.set(-1.8,1.3,-1.0);',
  'const mobile=innerWidth<700;desired.set(mobile?-8:-5,mobile?25:32,mobile?29:35);look.set(-1,1.7,0);');
-replace('camera.position.set(7,13,22);camTarget.set(-1.7,3,-3.2)',
+replace('camera.position.set(1,30,29);camTarget.set(-1.8,1.3,-1)',
  'camera.position.set(-5,32,35);camTarget.set(-1,1.7,0)');
 replace("level:'cocina-01-referencia'", "level:'sala-04-estar'");
 replace('NIVEL 01 · COCINA DE CASA','NIVEL 04 · SALA DE ESTAR');
@@ -70,7 +70,7 @@ replace("$('resume').innerHTML='Continuar a la oficina <span>↗</span>'","$('re
 replace("$('resume').onclick=()=>state==='won'?nextLevel():pause()","$('resume').onclick=()=>state==='won'?start():pause()");
 replace("$('nextLevel').hidden=auto;$('resultEyebrow')","$('nextLevel').hidden=true;$('resultEyebrow')",false);
 replace("'¡Te caíste fuera de la cocina!'","'¡Caíste desde los muebles de la sala!'");
-replace("'Una caída desde la mesa te rompe. ¡Baja por la silla!'","'Baja por el banquito, esquiva al gato y escala los libreros.'");
+replace("'Baja por la silla izquierda y evita caer en el agua de la tarja.'","'Baja por el banquito, esquiva al gato y escala los libreros.'");
 replace('bajar por la silla y subir hacia la cafetera','cruzar la sala y escalar los libreros',false);
 replace('CAFETERA · ${Math.round(Math.hypot(gx,gz))}','CAFETERA · ${Math.round(Math.hypot(gx,gz))}',false);
 replace('function nextLevel(){location.href=new URL(location.protocol===\'file:\'?\'../oficina/index.html\':\'../oficina/\',location.href).href;}',

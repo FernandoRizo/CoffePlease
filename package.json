@@ -1,7 +1,7 @@
 {
   "name": "coffee-please-telemetria",
-  "version": "1.7.0",
-  "description": "Coffee Please — cuatro niveles y sala con libreros, libros-trampa y telemetría",
+  "version": "1.8.0",
+  "description": "Coffee Please — cuatro niveles; cocina en L y tarja inundada",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",

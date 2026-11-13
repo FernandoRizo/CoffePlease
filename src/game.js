@@ -24,203 +24,206 @@ function label(text,x,y,z,size=1.7,color='#385c46'){
   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthWrite:false}));sprite.position.set(x,y,z);sprite.scale.set(size,size/4,1);scene.add(sprite);return sprite;
 }
 // === UNA COCINA DE CASA ===
-// Inspiración de distribución: mesa central en primer plano, sillas, puerta al fondo,
-// muebles de madera, alacenas altas, ventana a la derecha y cafetera sobre la encimera.
-// Todos los escalones jugables tienen una superficie correspondiente en physics.js.
-const warmWood=mat('#b37947'),walnut=mat('#63402d'),walnutLite=mat('#81523a'),orangeTile=mat('#d9a06c',.83),grout=mat('#ab7451'),glass=mat('#acd3d4',.2),pale=mat('#fff0d5'),iron=mat('#747a72',.42,.55),gold=mat('#d6ab64',.35,.62);
+// Nivel 01: cocina en L según el plano del usuario. De la mesa al suelo y al lateral
+// izquierdo; luego tarja inundada, preparación, estufa y barra de café de la derecha.
+const warmWood=mat('#b78051'),walnut=mat('#68432e'),walnutLite=mat('#94613c'),orangeTile=mat('#d5a57f'),
+ grout=mat('#b97f5a'),glass=mat('#a3d8df',.20),pale=mat('#fff3d9'),
+ iron=mat('#6e7f7c',.42,.55),gold=mat('#d6b06a',.35,.62);
 const FLOOR_Y=platforms[FLOOR_INDEX].y;
+const TB=platforms[0],SINK=platforms[3],MICRO=platforms[4],ST=platforms[6],GP=platforms[GOAL_INDEX];
+scene.background=new THREE.Color('#f2d7b6');
+scene.fog=new THREE.Fog('#f2d7b6',52,95);
 box(27.4,.26,21,M.floor,0,-.14,0);
-// Baldosas de terracota, discretas, legibles desde la cámara elevada.
-for(let xi=-13;xi<13;xi+=1.65)for(let zi=-10;zi<10;zi+=1.65){
-  const m=(Math.round(xi/1.65)+Math.round(zi/1.65))%5===0?mat('#ebc59e'):orangeTile;
-  const t=box(1.605,.012,1.605,m,xi+.75,.008,zi+.75);t.receiveShadow=true;t.castShadow=false;
+// Baldosas grandes y limpias, con juntas visibles desde vista cenital.
+for(let x=-13.60;x<13.2;x+=1.60)for(let z=-10.48;z<10;z+=1.60){
+ const alt=(Math.round((x+13.6)/1.6)+Math.round((z+10.48)/1.6))%4===0;
+ const tile=box(1.565,.012,1.565,alt?mat('#eed1ad'):orangeTile,x+.79,.008,z+.79);
+ tile.castShadow=false;
 }
-// Pared trasera, pared izquierda y marco del lado de la ventana.
-box(27.4,8.7,.26,mat('#edcba4'),0,4.27,-10.58);
-box(.24,8.7,21,mat('#e8c8a7'),-13.55,4.27,0);
-box(.24,8.7,21,mat('#e9d4b4'),13.55,4.27,0);
-// Azulejos de la zona de cocción: el patrón de juntas define la escala doméstica.
-box(24.2,4.2,.045,mat('#d8a176'),.95,2.15,-10.405);
-for(let xx=-11.1;xx<=13;xx+=.81)box(.022,4.2,.054,grout,xx,2.15,-10.37);
-for(let yy=.34;yy<4.4;yy+=.81)box(24.2,.022,.054,grout,.95,yy,-10.36);
-box(27.0,.15,.22,walnut,0,.17,-10.3);
-// Puerta pintada de blanco en la pared izquierda del fondo.
-box(3.65,6.15,.14,walnutLite,-10.9,3.08,-10.26);
-box(3.35,5.93,.13,mat('#f7ece0'),-10.9,3.08,-10.14);
-for(const cy of [1.76,4.35])for(const cx of [-11.65,-10.15]){
-  box(1.26,2.00,.06,mat('#fff7e8'),cx,cy,-10.052);
-  box(1.13,1.87,.025,mat('#eee3d4'),cx,cy,-10.006);
-}
-cylinder(.10,.10,.17,gold,-9.57,2.92,-9.96).rotation.x=Math.PI/2;
-box(.48,.07,.11,gold,-9.33,2.91,-9.95);
-// Ventana con cristales azul claro y persiana de madera en el muro lateral derecho.
-box(.05,4.4,6.8,mat('#f8dfb7'),13.37,5.25,-2.15);
-box(.045,3.9,6.30,glass,13.31,5.30,-2.15);
-for(const z of [-5.3,-2.15,1.0])box(.13,4.1,.12,pale,13.27,5.25,z);
-box(.15,.14,6.7,pale,13.25,5.25,-2.15);
-for(let y=7.45;y>6.6;y-=.18)box(.08,.065,6.62,warmWood,13.20,y,-2.15);
-// Campana, alacenas altas y aparadores de nogal en la pared posterior.
-for(const [x,w] of [[-6.2,3.0],[-1.8,3.1],[1.6,3.1],[5.2,3.1],[8.5,2.7]]){
-  box(w,2.55,1.15,walnut,x,6.45,-9.78);
+box(27.4,9.1,.25,mat('#ebd2b3'),0,4.5,-10.53);
+box(.25,9.1,21,mat('#ecd9c0'),-13.55,4.5,0);
+box(.25,9.1,21,mat('#f1dfc4'),13.55,4.5,0);
+// Azulejos de pared, solo encima de las encimeras superiores.
+box(25,4.5,.045,mat('#dea980'),0,4.8,-10.35);
+for(let x=-12.5;x<=12.5;x+=.85)box(.025,4.5,.055,grout,x,4.8,-10.31);
+for(let y=2.55;y<7.2;y+=.85)box(25,.022,.055,grout,0,y,-10.29);
+// Alacenas traseras y costado derecho, para que se reconozca la cocina en forma de L.
+function cabinet(x,z,w,d,side=false){
+ const h=2.26,y=6.70;
+ box(w,h,d,walnut,x,y,z);
+ if(!side){
   for(const dx of [-w/4,w/4]){
-    box(w/2-.1,2.30,.065,walnutLite,x+dx,6.45,-9.12);
-    box(w/2-.38,1.98,.02,walnut,x+dx,6.45,-9.07);
-    box(.34,.06,.10,gold,x+dx+(dx<0?.29:-.29),6.17,-9.01);
+   box(w/2-.10,h-.20,.065,walnutLite,x+dx,y,z+d/2+.04);
+   box(.34,.055,.09,gold,x+dx+(dx<0?.20:-.20),y-.30,z+d/2+.13);
   }
-}
-// Un armario abierto con paquetes, como en la referencia.
-box(2.25,.08,.8,walnut,-1.8,7.00,-8.98);
-for(let i=0;i<6;i++){
-  const colors=['#d1a857','#b45f3e','#6fa4a8','#dacc9a','#bb6f66','#638b70'];
-  box(.31,.54,.52,mat(colors[i]),-2.62+i*.33,7.26,-8.95);
-}
-// Ventilación sobre la cocina.
-box(3,.33,1.62,M.metal,5.55,5.0,-8.8);
-box(1.6,.68,.7,walnutLite,5.55,5.49,-9.15);
-// Contorno de la encimera en el fondo: no hay una sucesión de islas flotantes.
-for(let i=3;i<=GOAL_INDEX;i++){
-  const p=platforms[i];const stone=mat('#edd4a9',.34);
-  box(p.w-.025,p.y-.12,p.d-.1,walnut,p.x,(p.y-.12)/2,p.z);
-  box(p.w,.24,p.d,stone,p.x,p.y-.12,p.z);
-  // Puertas y tiradores mirando hacia el centro de la habitación.
-  const front=p.z+p.d/2-.025;
-  for(const dx of [-p.w/4,p.w/4]){
-    box(p.w/2-.09,2.68,.06,walnutLite,p.x+dx,1.60,front+.04);
-    box(p.w/2-.32,2.36,.05,walnut,p.x+dx,1.60,front+.10);
-    box(.35,.06,.11,gold,p.x+dx,2.68,front+.15);
+ }else{
+  for(const zz of [-d/4,d/4]){
+   box(.06,h-.15,d/2-.12,walnutLite,x-w/2-.035,y,z+zz);
+   box(.08,.055,.34,gold,x-w/2-.13,y-.30,z+zz);
   }
-  box(p.w-.12,.12,.09,walnut,p.x,.17,front+.11);
-}
-// Isla de comedor: mesa con cuatro patas y un canto de madera, sin colisiones inventadas.
-const TB=platforms[0];
-box(TB.w,.28,TB.d,warmWood,TB.x,TB.y-.14,TB.z);
-box(TB.w-.14,.025,TB.d-.14,mat('#d09b64'),TB.x,TB.y+.016,TB.z);
-for(const sx of [-1,1])for(const sz of [-1,1]){
- const lx=TB.x+sx*(TB.w/2-.38),lz=TB.z+sz*(TB.d/2-.37);
- box(.28,TB.y-.28,.29,walnut,lx,(TB.y-.28)/2,lz);
-}
-for(const dz of [-1,1])box(TB.w-.6,.24,.16,walnut,TB.x,TB.y-.4,TB.z+dz*(TB.d/2-.2));
-// Silla de la ruta principal: un lugar evidente para saltar al descender de la mesa.
-function chair(p,backZ){
- box(p.w,.23,p.d,warmWood,p.x,p.y-.115,p.z);
- for(const sx of [-1,1])for(const sz of [-1,1]){
-  box(.16,p.y-.12,.16,walnut,p.x+sx*(p.w/2-.22),(p.y-.12)/2,p.z+sz*(p.d/2-.22));
  }
- for(const sx of [-1,1])box(.17,1.7,.17,walnut,p.x+sx*(p.w/2-.2),p.y+.72,p.z+backZ*(p.d/2-.17));
- box(p.w-.25,.84,.15,warmWood,p.x,p.y+1.20,p.z+backZ*(p.d/2-.17));
+}
+for(const p of [platforms[8],platforms[9],platforms[4],platforms[5],platforms[6],platforms[7]])
+ cabinet(p.x,-9.75,p.w-.08,.95);
+for(const p of [platforms[18],platforms[19],platforms[20]])
+ cabinet(12.32,p.z,.95,p.d-.1,true);
+// Encimeras y puertas inferiores. La tarja se modela APARTE porque contiene agua.
+const stone=mat('#e9d5b3',.32),door=mat('#78482e');
+function counter(q,side=false){
+ box(q.w-.06,q.y-.17,q.d-.09,walnut,q.x,(q.y-.17)/2,q.z);
+ box(q.w,.22,q.d,stone,q.x,q.y-.11,q.z);
+ if(!side){
+  const front=q.z+q.d/2-.02;
+  for(const xx of [-q.w/4,q.w/4]){
+   box(q.w/2-.12,2.55,.06,walnutLite,q.x+xx,1.6,front+.06);
+   box(q.w/2-.33,2.24,.05,door,q.x+xx,1.6,front+.13);
+   box(.29,.055,.12,gold,q.x+xx,2.65,front+.20);
+  }
+ }else{
+  const front=q.x-q.w/2-.03;
+  for(const zz of [-q.d/4,q.d/4]){
+   box(.06,2.55,q.d/2-.12,walnutLite,front-.08,1.6,q.z+zz);
+   box(.04,2.24,q.d/2-.30,door,front-.14,1.6,q.z+zz);
+   box(.09,.055,.28,gold,front-.22,2.65,q.z+zz);
+  }
+ }
+}
+for(const i of [8,9,4,5,6,7])counter(platforms[i]);
+for(const i of [18,19,20,10,21,11])counter(platforms[i],true);
+// El cuerpo del fregadero no tiene un techo sólido. La cubeta está abierta.
+box(SINK.w-.12,2.55,SINK.d-.08,walnut,SINK.x,1.28,SINK.z);
+const basinBottom=box(SINK.w-.20,.12,SINK.d-.22,mat('#596d73',.25,.6),SINK.x,2.58,SINK.z);
+for(const xx of [-1,1])box(.16,.31,SINK.d,iron,SINK.x+xx*(SINK.w/2-.08),3.20,SINK.z);
+for(const zz of [-1,1])box(SINK.w,.31,.16,iron,SINK.x,3.20,SINK.z+zz*(SINK.d/2-.08));
+const waterMat=new THREE.MeshPhysicalMaterial({color:'#5fb7c6',transparent:true,opacity:.82,
+ roughness:.13,metalness:.1,clearcoat:1,clearcoatRoughness:.08,depthWrite:false,side:THREE.DoubleSide});
+const sinkWater=box(SINK.w-.30,.035,SINK.d-.25,waterMat,SINK.x,3.16,SINK.z);
+sinkWater.castShadow=false;
+const sinkRipples=[];
+for(let i=0;i<3;i++){
+ const r=torus(.25+i*.32,.020,new THREE.MeshBasicMaterial({color:'#dbf9fe',transparent:true,opacity:.35,depthWrite:false}),
+ SINK.x-.65+i*.55,3.195,SINK.z+(i%2?.2:-.25));r.rotation.x=-Math.PI/2;r.castShadow=false;sinkRipples.push(r);
+}
+// Grifo y gotitas. La superficie del agua está por debajo de los trastes de salto.
+const tap=torus(.50,.085,M.metal,SINK.x-.20,4.20,SINK.z-1.03);tap.rotation.y=Math.PI/2;
+box(.14,1.06,.14,M.metal,SINK.x-.66,3.71,SINK.z-1.09);
+cylinder(.05,.05,.14,glass,SINK.x-.20,3.71,SINK.z-.56);
+// Platos reales, una taza boca abajo y cubierto como superficies de plataformas.
+for(const i of [22,23,24,25]){
+ const p=platforms[i];
+ if(i===24){
+  box(p.w,.11,p.d,iron,p.x,p.y-.055,p.z);
+  for(let j=-2;j<=2;j++)box(.065,.035,.55,pale,p.x+j*.12,p.y+.01,p.z);
+  box(.07,.035,.75,iron,p.x+.18,p.y+.04,p.z-.1);
+ }else if(i===23){
+  cylinder(.47,.35,.34,M.cream,p.x,p.y-.18,p.z);
+  cylinder(.47,.47,.07,glass,p.x,p.y-.035,p.z);
+  torus(.43,.035,iron,p.x,p.y+.008,p.z).rotation.x=-Math.PI/2;
+ }else{
+  cylinder(.49,.47,.15,M.cream,p.x,p.y-.075,p.z);
+  torus(.41,.04,iron,p.x,p.y+.008,p.z).rotation.x=-Math.PI/2;
+  cylinder(.22,.22,.045,mat('#d7e5df'),p.x,p.y+.03,p.z);
+ }
+}
+label('¡AGUA! SALTA POR LOS TRASTES',SINK.x,4.85,SINK.z,5.0,'#225f77');
+// Comedor según plano: mesa centrada en el área inferior y silla a su izquierda.
+box(TB.w,.27,TB.d,warmWood,TB.x,TB.y-.135,TB.z);
+box(TB.w-.1,.025,TB.d-.1,mat('#e1ba83'),TB.x,TB.y+.016,TB.z);
+for(const sx of [-1,1])for(const sz of [-1,1]){
+ box(.27,TB.y-.26,.27,walnut,TB.x+sx*(TB.w/2-.36),(TB.y-.26)/2,TB.z+sz*(TB.d/2-.35));
+}
+function chair(q,backZ){
+ box(q.w,.23,q.d,warmWood,q.x,q.y-.115,q.z);
+ for(const sx of [-1,1])for(const sz of [-1,1]){
+  box(.16,q.y-.14,.16,walnut,q.x+sx*(q.w/2-.22),(q.y-.14)/2,q.z+sz*(q.d/2-.2));
+ }
+ for(const sx of [-1,1])box(.16,1.64,.16,walnut,q.x+sx*(q.w/2-.2),q.y+.74,q.z+backZ*(q.d/2-.17));
+ box(q.w-.22,.73,.14,warmWood,q.x,q.y+1.19,q.z+backZ*(q.d/2-.17));
 }
 chair(platforms[1],-1);
-// Otra silla decorativa del otro lado: ayuda a entender el contexto de comedor.
-chair({x:-7.35,z:3.0,y:1.9,w:2.1,d:2.0},-1);
-const LOW=platforms[2];
-box(LOW.w,.23,LOW.d,walnutLite,LOW.x,LOW.y-.115,LOW.z);
-for(const sx of [-1,1])for(const sz of [-1,1])box(.22,.85,.22,walnut,LOW.x+sx*.62,.425,LOW.z+sz*.6);
-// Repisas que conducen AL refrigerador, luego a la encimera izquierda.
-// Las superficies jugables se definen una sola vez en physics.js.
-function platformProp(index){
- const p=platforms[index],h=p.y,kind=p.kind;
- if(kind==='fridge')return; // El refrigerador tiene su propia carrocería más abajo.
- if(kind==='step'){
-  box(p.w,h-.10,p.d,mat('#b98f65'),p.x,(h-.10)/2,p.z);
-  box(p.w,.16,p.d,warmWood,p.x,h-.08,p.z);
-  for(const sx of [-1,1])box(.07,h-.20,.07,walnutLite,p.x+sx*(p.w/2-.16),(h-.2)/2,p.z+p.d/2-.12);
- }else{
-  box(p.w,.16,p.d,kind==='wallShelf'?mat('#ca9a69'):warmWood,p.x,h-.08,p.z);
-  // Tornapuntas metálicas: la repisa está anclada al lateral del frigorífico
-  // o a la pared, no es una plataforma suspendida sin explicación.
-  if(kind==='shelf'){
-   const edge=-10.57,inner=p.x-p.w/2,gap=Math.max(.25,inner-edge);
-   for(const dz of [-.29,.29]){
-    box(gap,.11,.13,iron,(edge+inner)/2,h-.19,p.z+dz);
-    box(.1,.58,.13,iron,edge+.05,h-.45,p.z+dz);
-   }
-  }else if(kind==='wallShelf'){
-   for(const dz of [-.38,.38]){
-    box(1.35,.12,.13,iron,-12.60,h-.28,p.z+dz);
-    box(.12,.75,.13,iron,-13.23,h-.55,p.z+dz);
-   }
-  }
-  box(p.w-.1,.025,.06,walnutLite,p.x,h+.016,p.z+p.d/2-.05);
+const low=platforms[2];
+box(low.w,.23,low.d,walnutLite,low.x,low.y-.115,low.z);
+for(const sx of [-1,1])for(const sz of [-1,1])box(.17,.87,.17,walnut,low.x+sx*.57,.435,low.z+sz*.56);
+// Otras tres sillas decorativas, alejadas del salto obligatorio.
+for(const [x,z,back] of [[-2.0,1.65,-1],[.65,4.7,1],[-3.2,8.1,1]]){
+ const q={x,z,y:2.0,w:1.6,d:1.50};chair(q,back);
+}
+// Repisas laterales en pared izquierda, con escuadras y superficies jugables.
+for(let i=13;i<=17;i++){
+ const p=platforms[i];
+ box(p.w,.15,p.d,warmWood,p.x,p.y-.075,p.z);
+ for(const dz of [-.35,.35]){
+  box(.13,.49,.13,iron,-12.00,p.y-.34,p.z+dz);
+  box(.65,.11,.13,iron,-11.69,p.y-.27,p.z+dz);
  }
 }
-for(let i=13;i<platforms.length;i++)platformProp(i);
-// Frigorífico y estantería de comedor para llenar el espacio de forma realista.
-box(2.1,5.9,2.8,M.cream,-11.65,2.95,1.2);
-box(2.12,.035,2.85,M.metal,-11.65,3.2,1.2);
-box(2.12,.055,2.83,mat('#ece4d4'),-11.65,5.88,1.2); // Techo del refrigerador pisable
-label('PASA POR EL REFRIGERADOR',-11.55,6.75,1.1,3.1,'#315e4b');
-box(.12,1.3,.14,iron,-10.51,4.55,2.02);
-box(.12,1.1,.14,iron,-10.51,2.38,2.02);
-for(let y of [.16,1.35,2.65,4.3])box(2.7,.16,2.0,walnut,-11.4,y,6.35);
-for(const sx of [-1,1])box(.14,4.3,.16,walnut,-11.4+sx*1.28,2.2,6.35);
+label('SUBE POR LAS REPISAS',-11.25,4.85,-.9,5.0,'#3b6c4c');
 function plant(x,y,z){
- cylinder(.34,.28,.64,mat('#a66946'),x,y+.32,z);
- for(let i=0;i<8;i++){
-  const a=i*2.4,leaf=mesh(new THREE.SphereGeometry(.22,10,8),M.green,x+Math.cos(a)*.28,y+1.0+(i%3)*.18,z+Math.sin(a)*.24);
-  leaf.scale.set(.6,1.8,.36);leaf.rotation.z=Math.sin(a)*.5;
+ cylinder(.32,.29,.58,mat('#b77757'),x,y+.29,z);
+ for(let i=0;i<7;i++){
+  const a=i*2.4,leaf=mesh(new THREE.SphereGeometry(.21,10,8),M.green,x+Math.cos(a)*.24,y+.86+(i%3)*.12,z+Math.sin(a)*.22);
+  leaf.scale.set(.6,1.6,.35);
  }
 }
-plant(-11.5,2.71,6.35);
-// Fregadero, grifo y microondas sobre el mueble del fondo.
-const SINK=platforms[3];
-box(2.2,.05,1.55,iron,SINK.x,3.375,SINK.z+.25);
-box(1.8,.05,1.25,M.black,SINK.x,3.41,SINK.z+.25);
-const tap=torus(.40,.075,M.metal,SINK.x,4.06,SINK.z-.27);tap.rotation.y=Math.PI/2;
-box(.13,.78,.14,M.metal,SINK.x,3.83,SINK.z-.77);
-const MICRO=platforms[4];
-box(1.78,1.28,.98,M.cream,MICRO.x,4.03,MICRO.z-.62);
-box(1.27,.87,.045,M.black,MICRO.x-.16,4.05,MICRO.z-.10);
-box(.25,.87,.05,M.metal,MICRO.x+.72,4.05,MICRO.z-.08);
-for(const y of [4.37,4.09,3.82])cylinder(.055,.055,.04,M.coral,MICRO.x+.72,y,MICRO.z-.035).rotation.x=Math.PI/2;
-// Ollas, tostadora y tabla de cortar: decoración que no altera el recorrido.
-const ST=platforms[6];
-box(2.35,.06,2.6,M.black,ST.x,ST.y+.04,ST.z);
-for(const x of [-.7,.6]){const burner=torus(.46,.067,x>0?M.coral:M.metal,ST.x+x,ST.y+.085,ST.z);burner.rotation.x=-Math.PI/2;}
-const heat=mesh(new THREE.CircleGeometry(.45,36),new THREE.MeshBasicMaterial({color:'#ff824c',transparent:true,opacity:.55,depthWrite:false}),ST.x+.6,ST.y+.091,ST.z);heat.rotation.x=-Math.PI/2;
-const cookpot=cylinder(.57,.52,.52,iron,ST.x-.70,ST.y+.37,ST.z-.2);
-for(const x of [-1,1])box(.28,.10,.18,M.black,ST.x-.70+x*.67,ST.y+.43,ST.z-.2);
-box(.70,.12,.42,M.paper,platforms[7].x,3.43,platforms[7].z-.5);
-// Rollos de papel y platos cerca de la cafetera (evitando tapar el plato de llegada).
-const TOWEL=mesh(new THREE.CylinderGeometry(.36,.36,1.35,32),mat('#f5eddf'),8.15,4.06,-7.95);
-cylinder(.085,.085,1.48,walnutLite,8.15,4.09,-7.95);
-for(let i=0;i<5;i++)cylinder(.72+i*.03,.72+i*.03,.07,mat(i%2?'#7e9781':'#d5ae80'),11.7,3.48+i*.08,-8.15);
-// Cafetera al fondo derecho: el espacio debajo de la boquilla permanece libre.
-const GP=platforms[GOAL_INDEX];
-box(1.90,2.17,.73,M.dark,GP.x,GP.y+1.08,GP.z-1.03);
-box(2.01,.40,1.62,M.green,GP.x,GP.y+2.19,GP.z-.62);
-box(.83,.26,.35,M.metal,GP.x,GP.y+1.68,GP.z-.23);
-cylinder(.065,.065,.30,M.metal,GP.x,GP.y+1.48,GP.z-.10);
-box(.54,.19,.07,M.black,GP.x,GP.y+2.24,GP.z+.19);
-cylinder(.09,.09,.08,M.coral,GP.x+.68,GP.y+2.23,GP.z+.20).rotation.x=Math.PI/2;
-const plate=cylinder(.71,.73,.07,M.metal,GP.x,GP.y+.04,GP.z);
-const stream=cylinder(.04,.06,.50,M.coffee,GP.x,GP.y+1,GP.z);stream.visible=false;
-label('CAFETERA',GP.x,6.42,GP.z,2.8);
-// Rodillo en la mesa inicial; el movimiento se sincroniza en render() con obstacleAt().
+plant(-10.5,3.35,-8.12);
+// Microondas, estufa y su peligro de calor en las posiciones del blueprint.
+box(1.90,1.25,1.02,M.cream,MICRO.x,4.02,MICRO.z-.62);
+box(1.35,.82,.055,M.black,MICRO.x-.2,4.05,MICRO.z-.075);
+box(.21,.79,.07,M.metal,MICRO.x+.77,4.05,MICRO.z-.075);
+for(const y of [3.84,4.10,4.35])cylinder(.048,.048,.04,M.coral,MICRO.x+.78,y,MICRO.z-.02).rotation.x=Math.PI/2;
+box(ST.w-.15,.075,ST.d-.25,M.black,ST.x,ST.y+.04,ST.z);
+for(const xx of [-.72,.60])for(const zz of [-.57,.58]){
+ const burner=torus(.36,.05,xx>0&&zz<0?M.coral:M.metal,ST.x+xx,ST.y+.09,ST.z+zz);
+ burner.rotation.x=-Math.PI/2;
+}
+const heat=mesh(new THREE.CircleGeometry(.47,36),new THREE.MeshBasicMaterial({color:'#ff824c',transparent:true,opacity:.58,depthWrite:false}),ST.x+.60,ST.y+.10,ST.z);
+heat.rotation.x=-Math.PI/2;
+const cookpot=cylinder(.51,.47,.50,iron,ST.x-.72,ST.y+.34,ST.z-.55);
+for(const xx of [-1,1])box(.24,.09,.17,M.black,ST.x-.72+xx*.59,ST.y+.41,ST.z-.55);
+// Campana de extracción, latas y área de vasos.
+box(3.0,.26,1.55,M.metal,ST.x,5.30,-8.9);
+box(1.65,.50,.62,walnutLite,ST.x,5.75,-9.30);
+for(let i=0;i<4;i++)cylinder(.24,.24,.25,mat(i%2?'#c69066':'#e5deca'),8.0+i*.4,3.48,-6.5);
+const GRINDER=platforms[10];
+box(.83,1.03,.70,M.dark,GRINDER.x,GRINDER.y+.52,GRINDER.z-.35);
+cylinder(.33,.25,.64,M.metal,GRINDER.x,GRINDER.y+1.32,GRINDER.z-.35);
+box(.55,.34,.55,M.black,GRINDER.x,GRINDER.y+1.45,GRINDER.z-.35);
+for(let i=0;i<4;i++)cylinder(.21,.21,.28,M.cream,platforms[21].x+.5+(i%2)*.48,3.50,platforms[21].z+(i<2?-.32:.32));
+// Cafetera industrial visible en el extremo de la barra derecha.
+box(2.00,2.10,.77,M.dark,GP.x,GP.y+1.06,GP.z-1.02);
+box(2.05,.39,1.58,M.green,GP.x,GP.y+2.17,GP.z-.58);
+box(.80,.20,.37,M.metal,GP.x,GP.y+1.65,GP.z-.22);
+cylinder(.06,.06,.27,M.metal,GP.x,GP.y+1.46,GP.z-.09);
+box(.60,.17,.12,M.black,GP.x,GP.y+2.22,GP.z+.18);
+const plate=cylinder(.69,.70,.08,M.metal,GP.x,GP.y+.04,GP.z);
+const stream=cylinder(.045,.055,.50,M.coffee,GP.x,GP.y+1,GP.z);stream.visible=false;
+label('CAFETERA · META',GP.x,GP.y+3.15,GP.z,4.1,'#235642');
+label('BAJA POR LA SILLA IZQUIERDA',-6.60,4.49,4.70,5.2,'#3e7954');
+label('LIMPIEZA Y RESIDUOS',-9.15,4.77,-7.1,3.9,'#3b604f');
+label('ESTACIONES INTERACTIVAS',10.4,4.75,-1.8,4.0,'#3b604f');
+// Rodillo móvil, charcos y migas. Se conservan los peligros previos.
 const rollingPin=new THREE.Group();scene.add(rollingPin);
 const barrel=cylinder(.22,.22,1.00,M.coral,0,0,0,rollingPin);barrel.rotation.x=Math.PI/2;
-for(const z of [-.61,.61]){const handle=cylinder(.083,.083,.24,walnut,0,0,z,rollingPin);handle.rotation.x=Math.PI/2;}
-// Peligros discretos: charco y migas en suelo, únicos y reconocibles a distancia.
-const puddle=mesh(new THREE.CircleGeometry(FLOOR_PUDDLE.r,44),new THREE.MeshBasicMaterial({color:'#70b6c2',transparent:true,opacity:.48,depthWrite:false}),FLOOR_PUDDLE.x,.025,FLOOR_PUDDLE.z);puddle.rotation.x=-Math.PI/2;
-for(let i=0;i<18;i++){const a=i*2.4,r=.12+Math.sqrt(i/18)*FLOOR_CRUMBS.r;
- cylinder(.07,.08,.033,i%3?M.coffee:M.darkwood,FLOOR_CRUMBS.x+Math.cos(a)*r,.034,FLOOR_CRUMBS.z+Math.sin(a)*r,scene,8);
+for(const z of [-.61,.61]){const handle=cylinder(.08,.08,.25,walnut,0,0,z,rollingPin);handle.rotation.x=Math.PI/2;}
+const puddle=mesh(new THREE.CircleGeometry(FLOOR_PUDDLE.r,40),new THREE.MeshBasicMaterial({color:'#70b6c2',transparent:true,opacity:.50,depthWrite:false}),FLOOR_PUDDLE.x,.027,FLOOR_PUDDLE.z);
+puddle.rotation.x=-Math.PI/2;
+for(let i=0;i<18;i++){
+ const a=i*2.4,r=.12+Math.sqrt(i/18)*FLOOR_CRUMBS.r;
+ cylinder(.07,.08,.034,i%3?M.coffee:M.darkwood,FLOOR_CRUMBS.x+Math.cos(a)*r,.035,FLOOR_CRUMBS.z+Math.sin(a)*r,scene,8);
 }
-// Señales breves. No se llena la cocina de iconos flotantes.
-label('BAJA POR LA SILLA',-1.00,4.38,3.65,3,'#4a7459');
-label('SUBE POR LAS REPISAS',-8.45,3.75,4.55,3.2,'#315e4b');
-label('HACIA LAS ENCIMERAS',-11.5,6.62,-3.2,3.0,'#315e4b');
-for(const route of [[0,1,2],[13,14,15,16,17,18,19,20,21,22,10]]){
+// Flechas entre zonas. Los platos cuentan como puntos válidos de salto.
+for(const route of [[0,1,2],[13,14,15,16,17,8,9,22,23,24,25,4],[5,6,7,18,19,20,10,11]]){
  for(let j=0;j<route.length-1;j++){
-  const p=platforms[route[j]],q=platforms[route[j+1]];
-  const v=new THREE.Vector3(q.x-p.x,0,q.z-p.z).normalize();
-  scene.add(new THREE.ArrowHelper(v,new THREE.Vector3(p.x,p.y+.11,p.z),.58,0x547d58,.18,.11));
+  const p=platforms[route[j]],q=platforms[route[j+1]],dir=new THREE.Vector3(q.x-p.x,0,q.z-p.z).normalize();
+  scene.add(new THREE.ArrowHelper(dir,new THREE.Vector3(p.x,p.y+.14,p.z),.53,0x557f58,.18,.11));
  }
 }
 // Zonas de impacto: cada lata tiene una advertencia luminosa antes de caer
 // de una alacena. La colisión se calcula con su posición animada, no por azar.
 const cabinetCanSpots=[
- {x:-6.15,z:-7.2,y:6.95,delay:0},{x:-1.75,z:-7.2,y:6.95,delay:1.1},
- {x:1.60,z:-7.2,y:6.95,delay:2.2},{x:5.20,z:-7.2,y:6.95,delay:3.3},
- {x:8.50,z:-7.2,y:6.95,delay:4.4}
+ {x:-9.15,z:-7.55,y:6.95,delay:0},{x:-1.55,z:-7.55,y:6.95,delay:1.1},
+ {x:1.40,z:-7.55,y:6.95,delay:2.2},{x:4.25,z:-7.55,y:6.95,delay:3.3},
+ {x:7.10,z:-7.55,y:6.95,delay:4.4}
 ];
 const fallingCans=cabinetCanSpots.map((place,i)=>{
  const g=new THREE.Group();scene.add(g);
@@ -257,12 +260,12 @@ function canHazards(dt){
    c.timer-=dt;
    c.warn.material.opacity=.35+.45*Math.abs(Math.sin(worldTime*11));
    c.warn.scale.setScalar(1+.17*Math.abs(Math.sin(worldTime*8)));
-   if(c.timer<=0){c.phase='fall';c.prevY=c.y;c.vy=-.2;c.z=-8.75;
+   if(c.timer<=0){c.phase='fall';c.prevY=c.y;c.vy=-.2;c.z=-9.10;
      c.g.visible=true;c.g.position.set(c.x,c.y,c.z);c.warn.visible=false;}
   }else if(c.phase==='fall'){
    c.prevY=c.y;c.vy-=20*dt;c.y+=c.vy*dt;
    const progress=Math.max(0,Math.min(1,(6.95-c.y)/3.32));
-   c.z=-8.75+1.55*progress;
+   c.z=-9.10+1.55*progress;
    c.g.position.set(c.x,c.y,c.z);c.g.rotation.x+=dt*5;
    if(canHitsHead(c,player)){
     die('lata');resetCans();return;
@@ -335,7 +338,7 @@ scene.add(stoveL,sinkL,goalL);
 {const c=document.createElement('canvas');c.width=512;c.height=320;const g=c.getContext('2d');g.fillStyle='#924f39';g.fillRect(0,0,512,320);
  for(const inset of [14,26,39]){g.strokeStyle=inset===26?'#e6bf8c':'#497a72';g.lineWidth=8;g.strokeRect(inset,inset,512-inset*2,320-inset*2)}
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
- const rug=new THREE.Mesh(new THREE.PlaneGeometry(8.2,6.2),new THREE.MeshStandardMaterial({map:t,roughness:1}));rug.rotation.x=-Math.PI/2;rug.position.set(-3.1,.028,2.5);rug.receiveShadow=true;scene.add(rug);}
+ const rug=new THREE.Mesh(new THREE.PlaneGeometry(8.2,5.5),new THREE.MeshStandardMaterial({map:t,roughness:1}));rug.rotation.x=-Math.PI/2;rug.position.set(TB.x,.028,TB.z);rug.receiveShadow=true;scene.add(rug);}
 ['#c0392b','#2e86c1','#d4ac0d','#27ae60','#8e44ad','#e67e22','#16a085'].forEach((c,k)=>{const [i,ox,oz]=[[5,1.1,-1.1],[7,-1.1,1.1],[9,1.1,1.1],[4,-1.1,1.1],[8,.9,-.9],[10,-.9,.9],[3,1.2,1.3]][k],P=platforms[i],x=P.x+ox,z=P.z+oz;
  if(k%3===0){cylinder(.16,.16,.34,mat(c,.4),x,P.y+.17,z);cylinder(.165,.165,.06,M.metal,x,P.y+.37,z);}
  else if(k%3===1){mesh(new THREE.SphereGeometry(.16,12,10),mat(c,.5),x,P.y+.16,z);cylinder(.01,.01,.08,M.darkwood,x,P.y+.34,z);}
@@ -364,7 +367,7 @@ function makeSpinner(pi,ox,oz){const P=platforms[pi],g=new THREE.Group(),arm=new
 function spinHit(){for(const s of spinners){if(player.y>s.y+.55)continue;const rx=player.x-s.x,rz=player.z-s.z;
  for(let i=0;i<4;i++){const a=s.arm.rotation.y+i*Math.PI/2,dx=Math.cos(a),dz=-Math.sin(a),t=clamp(rx*dx+rz*dz,0,1.1);
   if(Math.hypot(dx*t-rx,dz*t-rz)<.32){const l=Math.hypot(rx,rz)||1;damage(22,rx/l*4,rz/l*4);break;}}}}
-function fxExtra(dt){canHazards(dt);for(const s of spinners)s.arm.rotation.y+=s.sp*dt;
+function fxExtra(dt){canHazards(dt);for(const r of sinkRipples){r.scale.setScalar(.78+.20*Math.sin(worldTime*2.0+r.position.x));r.material.opacity=.27+.11*Math.sin(worldTime*3+r.position.z);}for(const s of spinners)s.arm.rotation.y+=s.sp*dt;
  stoveL.intensity=18+Math.sin(worldTime*12)*3;
  steamT-=dt;if(steamT<=0){steamT=.07;dustBurst(ST.x+.6+(rnd()-.5)*.5,ST.y+.26,ST.z+(rnd()-.5)*.5,1,'#ffffff',1.2,1.4,.3);dustBurst(GP.x,GP.y+2.2,GP.z+.7,1,'#f4f4f4',1,1.6,.3);}}
 // Enemigos: cucarachas empujadoras (PATROL → ALERT → CHARGE) y grietas de hormigas.
@@ -468,10 +471,10 @@ addEventListener('pagehide',()=>telSend('beacon'));
 function notify(text){$('toast').textContent=text;$('toast').classList.add('show');toastTimer=3;}
 function clockText(t){return `${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;}
 function clearFragments(){for(const f of fragments)scene.remove(f.mesh);fragments.length=0;}
-function start(isAuto=false){telSend();auto=isAuto;yaw=Math.PI/2;pitch=.48;heading=Math.PI/2;worldTime=0;player=createPlayer();deaths=0;elapsed=0;fill=0;deathTimer=0;lastCheckpoint=0;bestProgress=0;accumulator=0;keys.clear();jumpQueued=false;resetMug(true);telStart();clearFragments();cup.visible=true;liquid.visible=false;stream.visible=false;state='playing';$('intro').hidden=true;$('hud').hidden=false;$('overlay').hidden=true;$('touchControls').hidden=false;document.body.classList.add('playing');goalGuide.hidden=false;document.activeElement?.blur();notify(auto?'Recorrido guiado · bajar por la silla y subir hacia la cafetera':'Una caída desde la mesa te rompe. ¡Baja por la silla!');}
+function start(isAuto=false){telSend();auto=isAuto;yaw=Math.PI/2;pitch=.48;heading=Math.PI/2;worldTime=0;player=createPlayer();deaths=0;elapsed=0;fill=0;deathTimer=0;lastCheckpoint=0;bestProgress=0;accumulator=0;keys.clear();jumpQueued=false;resetMug(true);telStart();clearFragments();cup.visible=true;liquid.visible=false;stream.visible=false;state='playing';$('intro').hidden=true;$('hud').hidden=false;$('overlay').hidden=true;$('touchControls').hidden=false;document.body.classList.add('playing');goalGuide.hidden=false;document.activeElement?.blur();notify(auto?'Recorrido guiado · cruza la tarja saltando por los trastes':'Baja por la silla izquierda y evita caer en el agua de la tarja.');}
 function home(){telSend();resetMug(true);state='intro';auto=false;keys.clear();clearFragments();player=createPlayer();fill=0;cup.visible=true;liquid.visible=false;stream.visible=false;steam.forEach(s=>s.visible=false);$('intro').hidden=false;$('hud').hidden=true;$('overlay').hidden=true;$('touchControls').hidden=true;document.body.classList.remove('playing');goalGuide.hidden=true;}
 function pause(){if(state==='paused'){state=previousState;$('overlay').hidden=true;return;}if(!['playing','dead','serving'].includes(state))return;previousState=state;state='paused';keys.clear();jumpQueued=false;$('resultEyebrow').textContent='UN MOMENTO PARA RESPIRAR';$('resultTitle').textContent='En pausa.';$('resultText').textContent='Tu café puede esperar un momento.';$('resume').innerHTML='Continuar <span>↗</span>';$('overlay').hidden=false;}
-function die(reason){state='dead';deaths++;TEL.last=reason;if(reason==='caída'||reason==='caída alta')mug.falls++;if(reason==='hp'){dustBurst(player.x,player.y+.4,player.z,26);shake=.8;}deathTimer=1.15;cup.visible=false;notify(reason==='hp'?'¡La taza se rompió! Volvemos al último punto de control.':reason==='caída alta'?'¡Caída demasiado alta! La taza se rompió. Baja usando los muebles.':reason==='caída'?'¡Te caíste fuera de la cocina!':reason==='lata'?'¡Una lata cayó sobre la taza y la rompió!':'¡Ups! Volvemos al último punto de control.');for(let i=0;i<18;i++){const m=mesh(shardGeo,M.green,player.x,Math.max(player.y,.1)+.3,player.z);m.scale.set(.6+Math.random(),.6+Math.random(),.6+Math.random());fragments.push({mesh:m,v:new THREE.Vector3((Math.random()-.5)*4,2+Math.random()*3,(Math.random()-.5)*4)});}}
+function die(reason){state='dead';deaths++;TEL.last=reason;if(reason==='caída'||reason==='caída alta')mug.falls++;if(reason==='hp'){dustBurst(player.x,player.y+.4,player.z,26);shake=.8;}deathTimer=1.15;cup.visible=reason==='agua';notify(reason==='hp'?'¡La taza se rompió! Volvemos al último punto de control.':reason==='caída alta'?'¡Caída demasiado alta! La taza se rompió. Baja usando los muebles.':reason==='caída'?'¡Te caíste fuera de la cocina!':reason==='agua'?'¡La taza se hundió en la tarja! Regresas al último checkpoint.':reason==='lata'?'¡Una lata cayó sobre la taza y la rompió!':'¡Ups! Volvemos al último punto de control.');for(let i=0;i<(reason==='agua'?0:18);i++){const m=mesh(shardGeo,M.green,player.x,Math.max(player.y,.1)+.3,player.z);m.scale.set(.6+Math.random(),.6+Math.random(),.6+Math.random());fragments.push({mesh:m,v:new THREE.Vector3((Math.random()-.5)*4,2+Math.random()*3,(Math.random()-.5)*4)});}}
 function win(){state='won';stream.visible=false;$('resultEyebrow').textContent=auto?'RECORRIDO COMPLETADO':'MISIÓN CUMPLIDA';$('resultTitle').textContent='Ahora sí, un café.';$('resultText').textContent=`Llegaste en ${clockText(elapsed)} con ${deaths} ${deaths===1?'ruptura':'rupturas'}. Tu taza está llena. Ahora te espera la oficina.`;$('resume').innerHTML='Continuar a la oficina <span>↗</span>';showScore();telSend('fetch','victoria');$('overlay').hidden=false;}
 function input(){
  if(auto)return autoInput(player);
@@ -509,13 +512,18 @@ function render(now){requestAnimationFrame(render);const dt=Math.min((now-last)/
  if(drag||keys.has('KeyQ')||keys.has('KeyE'))camHold=2.5;else camHold=Math.max(0,camHold-dt);
  // La cámara no obliga a seguir la curva antigua: exploración libre con Q/E o arrastre.
  cup.position.set(player.x,player.y,player.z);
+ if(state==='dead'&&TEL.last==='agua'){
+  const sunk=Math.max(0,Math.min(1,(1.15-deathTimer)/1.15));
+  cup.position.y=SINK.y-.15-sunk*1.75;
+  cup.rotation.z=Math.sin(t*7)*.12;
+ }
  if(state==='intro'){cup.position.set(platforms[0].x,platforms[0].y+Math.sin(t*2)*.035,platforms[0].z);cup.rotation.set(0,Math.sin(t*.6)*.18,Math.sin(t*1.7)*.03);}else{cup.rotation.set(player.grounded?0:player.vy*.018,heading,0);}
- const groundY=supportHeight(player.x,player.z,player.y);shadow.position.set(player.x,groundY+.025,player.z);shadow.visible=cup.visible;shadow.material.opacity=.18*Math.max(0,1-(player.y-groundY)/3);
+ const groundY=supportHeight(player.x,player.z,player.y);shadow.position.set(player.x,groundY+.025,player.z);shadow.visible=cup.visible&&state!=='dead';shadow.material.opacity=.18*Math.max(0,1-(player.y-groundY)/3);
  heat.material.opacity=.5+Math.sin(worldTime*4)*.15;
  const obstacle=obstacleAt(worldTime);rollingPin.position.set(obstacle.x,obstacle.y,obstacle.z);rollingPin.rotation.z=worldTime*3;
  steam.forEach((s,i)=>{s.visible=fill>.5;if(s.visible){const a=(t*.5+i/7)%1;s.position.set(player.x+Math.sin(t+i)*.12,player.y+.8+a*.8,player.z);s.material.opacity=(1-a)*.25;}});
  if(state==='intro'){
-   const mobile=innerWidth<700;desired.set(mobile?5:7,13,mobile?21:22);look.set(mobile?-1.5:-1.7,3.0,-3.2);
+   const mobile=innerWidth<700;desired.set(mobile?2:1,mobile?29:30,mobile?28:29);look.set(-1.8,1.3,-1.0);
   }else{
    const height=platforms[player.platform].y;
    const horizontal=cameraDistance*Math.cos(pitch);
@@ -536,7 +544,7 @@ function render(now){requestAnimationFrame(render);const dt=Math.min((now-last)/
  visuals(t,dt);$('stageLabel').innerHTML=`<span>NIVEL 01 · COCINA DE CASA</span> ${state==='serving'?`LLENANDO ${Math.round(fill*100)}%`:platforms[player.platform].name.toUpperCase()}`;
  renderer.render(scene,camera);
 }
-camera.position.set(7,13,22);camTarget.set(-1.7,3,-3.2);requestAnimationFrame(render);
+camera.position.set(1,30,29);camTarget.set(-1.8,1.3,-1);requestAnimationFrame(render);
 $('play').onclick=()=>start();$('demo').onclick=()=>start(true);$('pause').onclick=pause;$('restart').onclick=()=>start(auto);$('resume').onclick=()=>state==='won'?nextLevel():pause();$('home').onclick=home;
 $('help').onclick=()=>{if(['playing','dead','serving'].includes(state))pause();$('helpDialog').showModal();};$('closeHelp').onclick=()=>$('helpDialog').close();
 const movement=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyQ','KeyE']);

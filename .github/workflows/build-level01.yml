@@ -1,0 +1,41 @@
+name: Build and test kitchen blueprint
+on:
+  push:
+    branches:
+      - feat/nivel01-cocina-plano-tarja-v18
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build all four levels
+        run: npm run build
+      - name: Test physics and server API
+        run: npm test
+      - name: Validate generated kitchen and other levels
+        run: |
+          test -s public/juego/index.html
+          test -s public/oficina/index.html
+          test -s public/obra/index.html
+          test -s public/sala/index.html
+          node --input-type=module --check < src/office-game.generated.js
+          node --input-type=module --check < src/construction-game.generated.js
+          node --input-type=module --check < src/living-game.generated.js
+          node -e "const fs=require('fs');const h=fs.readFileSync('public/juego/index.html','utf8');const a=h.indexOf('const payload=')+14,b=h.indexOf(';',a);const x=JSON.parse(h.slice(a,b));if(!Buffer.from(x.game,'base64').toString().includes('sinkRipples'))process.exit(1);if(!Buffer.from(x.physics,'base64').toString().includes('insideWater'))process.exit(1);const layout=JSON.parse(fs.readFileSync('public/levels.json','utf8'));if(!layout['cocina-01-referencia']?.water||Object.keys(layout).length!==4)process.exit(1);"
+      - name: Commit generated HTML files and level layouts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/juego/index.html public/oficina/index.html public/obra/index.html public/sala/index.html public/levels.json src/office-game.generated.js src/construction-game.generated.js src/living-game.generated.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build: regenerate all four levels with kitchen in L"
+            git push
+          fi

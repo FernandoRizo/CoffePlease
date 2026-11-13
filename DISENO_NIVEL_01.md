@@ -1,44 +1,46 @@
-# Coffee Please — Nivel 1: De la mesa al refrigerador y la cafetera (v1.6)
+# Coffee Please — Nivel 01 · Cocina en L (v1.8)
 
-## Objetivo del rediseño
+## Referencia y distribución
 
-La taza inicia sobre la mesa central de una cocina doméstica. Debe descender sin romperse por la silla y el banco, recorrer el suelo abierto y escalar repisas cerca del refrigerador. Al llegar a su techo, continúa por repisas de pared hasta el extremo izquierdo de la encimera; desde allí recorre la cocina completa hasta llegar al plato de la cafetera. Se retira totalmente el acceso directo de cajas/taburete/cajón junto a la meta.
+Este nivel reemplaza el diseño anterior de la cocina usando el plano cenital facilitado por el usuario (comedor inferior, muebles y electrodomésticos arriba, zona lateral derecha hasta la cafetera). El plano guía la disposición y el recorrido; las medidas están ajustadas al movimiento de una taza a escala para que se pueda saltar.
 
-## Recorrido jugable (de izquierda a derecha sobre el mobiliario)
+- **Comedor (sur/parte baja):** mesa central en x=-3.60, z=4.60, altura 3.20. Desciende por una silla **a la izquierda** y luego por el banco bajo.
+- **Suelo:** estancia amplia con cucarachas, hormigas, charco, migas y peligros existentes.
+- **Subida a la izquierda:** cinco repisas en x≈-11, alturas 0.80 → 1.60 → 2.40 → 3.16 → 3.35. Permiten llegar al armario de limpieza, no a la cafetera directamente.
+- **Encimera superior (norte):** limpieza y residuos, fregadero inundado, microondas, preparación, estufa y esquina.
+- **Barra derecha (este):** estación de vasos, molino y cafetera/meta en x=10.5, z=4.4.
+- **Alacenas:** las latas siguen cayendo hacia las zonas transitables de encimera, con advertencia visual.
+  
+## Secuencia de juego
 
 ```text
-MESA → SILLA → BANCO → SUELO
-                         └─ Cajón de fruta (0.85)
-                            → Carrito auxiliar (1.65)
-                            → Repisas laterales del refri (2.50 → 3.35 → 4.20 → 5.05)
-                            → TECHO DEL REFRIGERADOR (5.90) [checkpoint]
-                            → Repisas de pared (5.45 → 4.80 → 4.10)
-                            → PANERA (3.35) [checkpoint]
-                            → Mueble lateral → Fregadero → Microondas
-                            → Preparación → Estufa → Tabla de cortar
-                            → CAFETERA (3.35)
+MESA INICIAL → SILLA IZQUIERDA → BANCO → SUELO
+   → REPISAS DE PARED → LIMPIEZA/RESIDUOS [checkpoint]
+   → PLATO 1 → TAZA BOCA ABAJO → CUCHARA SOBRE PLATOS → PLATO 2
+   → MICROONDAS [checkpoint] → PREPARACIÓN → ESTUFA (quemador)
+   → ESQUINA DERECHA → VASOS → MOLINO → CAFETERA [meta]
 ```
 
-Las alturas entre paréntesis son unidades de juego. Las repisas tienen soportes visibles en los laterales del frigorífico o en la pared, y las de la cocina siguen el volumen de la encimera. Se mantienen recorridos explorables por el suelo, pero no hay un atajo hacia la cafetera.
+## Tarja completamente llena de agua
 
-## Riesgo y checkpoints
+La plataforma índice 3 (`kind: 'water'`) **no soporta a la taza**. Su hueco físico ocupa un rectángulo de 4.4 × 2.9 y la superficie del agua está a la altura `3.16`, por debajo del borde de la encimera (`3.35`).
 
-- Diferencia de caída de hasta 1.6 unidades: segura.
-- 1.6–2.75: daño proporcional.
-- Más de 2.75: ruptura inmediata y reaparición.
-- Checkpoints: suelo (rango 1), repisa baja (rango 2), techo del refrigerador (rango 3) y panera/entrada a la encimera (rango 4). La cafetera conserva el rango 5.
-- La estufa mantiene su quemador peligroso; las cucarachas y obstáculos originales siguen activos.
+Cuatro trastes/utensilios visibles coinciden con las plataformas de física `[22,23,24,25]`. Sus superficies transitables están a alturas 3.56, 3.65, 3.59 y 3.56. La ruta debe cruzar el agua saltando por estos objetos, porque la anchura de la tarja supera el salto directo desde un extremo al otro.
 
-## Latas que caen de las alacenas
+Cuando el jugador cae en el rectángulo y desciende hasta la superficie de agua, `step()` devuelve `{dead:true,reason:'agua',water:true}`. El motor muestra a la taza **hundiéndose en lugar de estallar** durante el temporizador de muerte y después la reaparece en el último checkpoint. Las caídas en la tarja se registran en la telemetría normal del nivel.
 
-Hay cinco estaciones sobre la encimera, aproximadamente en X=-6.15, -1.75, 1.60, 5.20 y 8.50; Z=-7.2. Se activan cuando la taza está cerca y sobre la parte alta. La señal luminosa parpadea **1.05 segundos**; después una lata visible cae desde la altura 6.95 hacia la encimera. Cada lata sigue su posición animada, tiene velocidad vertical y solo causa ruptura cuando su borde inferior cruza la parte superior de la taza mientras desciende y ambas coinciden horizontalmente.
+## Checkpoints y conservación de peligros
 
-Una lata que caiga a un lado no provoca daño. Al aterrizar sin golpear, desaparece, espera a que termine su enfriamiento y puede volver a activarse. El recorrido guiado está exento de este peligro para mostrar el camino, no para evaluar dificultad.
+- Rango 1: suelo.
+- Rango 2: tercera repisa de ascenso.
+- Rango 3: limpieza, antes de la tarja.
+- Rango 4: microondas, después de cruzar el fregadero.
+- Rango 5: cafetera.
 
-El impacto llama a la derrota por `lata`, registra una ruptura mediante la telemetría del nivel `cocina-01-referencia` y respawnea en el último checkpoint.
+Se conservan el rodillo móvil sobre la mesa, cucarachas en suelo y estufa, hormigas, zonas de charco y migas, quemador de la estufa, caída mortal por altura y cinco estaciones de latas que caen de las alacenas. Estas últimas están reposicionadas para la nueva barra superior.
 
-## Validaciones
+## Compatibilidad
 
-Se simularon todos los escalones con `step()` y `autoInput()`, incluyendo el paso sobre el refrigerador, las repisas de pared y la estufa evitando la zona caliente. Las pruebas automatizadas comprueban la eliminación del atajo, el recorrido completo y la detección de latas descendentes versus latas fuera de trayectoria. La revisión de ángulos de cámara, señalización y ritmo de las latas requiere probarlo en navegador con WebGL.
+No se modifican el contenido, la física, las rutas ni la telemetría de los niveles 2 (oficina), 3 (construcción) y 4 (sala). Los scripts de construcción sí reciben los nuevos marcadores de cámara y mensaje del motor para preservar sus cámaras anteriores durante la compilación.
 
-Se conservan los niveles de oficina y obra, junto al dashboard de trayectorias.
+Usar `npm run build` para regenerar los cuatro HTML autónomos y `npm test` para ejecutar las pruebas. La revisión visual de cámara, modelos y dificultad con ratón/táctil sigue siendo necesaria antes de fusionar a `main`.
