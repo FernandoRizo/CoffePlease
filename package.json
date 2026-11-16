@@ -1,17 +1,20 @@
 {
   "name": "coffee-please-telemetria",
-  "version": "1.8.0",
-  "description": "Coffee Please — cuatro niveles; cocina en L y tarja inundada",
+  "version": "1.9.0",
+  "description": "Coffee Please — seis niveles; terminal internacional (comidas, seguridad, bebederos y sala VIP)",
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js",
-    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node --test tests/living.test.mjs",
-    "build": "node build.js && node build-construction.js && node build-living.js",
+    "test:level": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node --test tests/living.test.mjs && node --test tests/terminal.test.mjs tests/embarque.test.mjs",
+    "build": "node build.js && node build-construction.js && node build-living.js && node build-airport.js",
     "test:api": "node tests/api.test.mjs",
     "test:browser": "node tests/browser.test.cjs",
-    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs && node --test tests/living.test.mjs",
+    "test:airport:browser": "node tests/airport.browser.test.cjs",
+    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs && node --test tests/living.test.mjs && node --test tests/terminal.test.mjs tests/embarque.test.mjs",
     "test:construction": "node --test tests/construction.test.mjs",
-    "test:living": "node --test tests/living.test.mjs"
+    "test:living": "node --test tests/living.test.mjs",
+    "test:terminal": "node --test tests/terminal.test.mjs",
+    "test:embarque": "node --test tests/embarque.test.mjs"
   },
   "engines": {
     "node": ">=18"

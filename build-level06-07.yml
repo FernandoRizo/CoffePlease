@@ -1,0 +1,39 @@
+name: Build and test levels 06 and 07
+on:
+  push:
+    branches:
+      - feat/nivel06-07-terminal-aeropuerto
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build all levels
+        run: npm run build
+      - name: Test physics and API
+        run: npm test
+      - name: Check generated airport levels and transition
+        run: |
+          test -s public/terminal/index.html
+          test -s public/embarque/index.html
+          node --input-type=module --check < src/terminal-game.generated.js
+          node --input-type=module --check < src/embarque-game.generated.js
+          node -e "const fs=require('fs');const l=JSON.parse(fs.readFileSync('public/levels.json','utf8'));for(const k of ['terminal-06-seguridad','embarque-07-vip'])if(!l[k]?.platforms?.length)process.exit(1);"
+          node -e "const fs=require('fs');const dec=f=>{const s=fs.readFileSync(f,'utf8');const a=s.indexOf('const payload=')+14,b=s.indexOf(';',a);const p=JSON.parse(s.slice(a,b));return Buffer.from(p.game,'base64').toString();};const t=dec('public/terminal/index.html'),e=dec('public/embarque/index.html');if(!t.includes('Continuar al embarque')||!t.includes('terminalHazards'))process.exit(1);if(!e.includes('embarqueDrips')||!e.includes('Jugar de nuevo'))process.exit(1);"
+      - name: Commit generated browser bundles to feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/terminal/index.html public/embarque/index.html public/levels.json src/terminal-game.generated.js src/embarque-game.generated.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build: generate level 06 and 07 playable bundles"
+            git push
+          fi
