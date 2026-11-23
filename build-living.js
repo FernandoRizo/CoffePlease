@@ -66,15 +66,15 @@ replace('camera.position.set(1,30,29);camTarget.set(-1.8,1.3,-1)',
 replace("level:'cocina-01-referencia'", "level:'sala-04-estar'");
 replace('NIVEL 01 · COCINA DE CASA','NIVEL 04 · SALA DE ESTAR');
 replace('Tu taza está llena. Ahora te espera la oficina.','¡Superaste la sala de estar y alcanzaste la cafetera!',false);
-replace("$('resume').innerHTML='Continuar a la oficina <span>↗</span>'","$('resume').innerHTML='Jugar de nuevo <span>↗</span>'",false);
-replace("$('resume').onclick=()=>state==='won'?nextLevel():pause()","$('resume').onclick=()=>state==='won'?start():pause()");
+replace("$('resume').innerHTML='Continuar a la oficina <span>↗</span>'","$('resume').innerHTML='Continuar a la terminal <span>↗</span>'",false);
+replace("$('resume').onclick=()=>state==='won'?nextLevel():pause()","$('resume').onclick=()=>state==='won'?nextLevel():pause()");
 replace("$('nextLevel').hidden=auto;$('resultEyebrow')","$('nextLevel').hidden=true;$('resultEyebrow')",false);
 replace("'¡Te caíste fuera de la cocina!'","'¡Caíste desde los muebles de la sala!'");
 replace("'Baja por la silla izquierda y evita caer en el agua de la tarja.'","'Baja por el banquito, esquiva al gato y escala los libreros.'");
 replace('bajar por la silla y subir hacia la cafetera','cruzar la sala y escalar los libreros',false);
 replace('CAFETERA · ${Math.round(Math.hypot(gx,gz))}','CAFETERA · ${Math.round(Math.hypot(gx,gz))}',false);
 replace('function nextLevel(){location.href=new URL(location.protocol===\'file:\'?\'../oficina/index.html\':\'../oficina/\',location.href).href;}',
- 'function nextLevel(){start();}',false);
+ "function nextLevel(){location.href=new URL(location.protocol==='file:'?'../terminal/index.html':'../terminal/',location.href).href;}",false);
 const hook=`\nif(new URLSearchParams(location.search).get('test')==='1')window.__coffee={get state(){return state},get player(){return player},get mug(){return mug},get time(){return worldTime},get camera(){return camera},get scene(){return scene},start,tick,win,pause,get telemetry(){return TEL}};\n`;
 const findPack=html=>{const i=html.indexOf('const payload=')+14,j=html.indexOf(';',i);if(i<14||j<i)throw Error('HTML sin payload');return [i,j,JSON.parse(html.slice(i,j))];};
 let html=base.replace('Cocina abierta · Nivel 1','Sala de estar · Nivel 4')
