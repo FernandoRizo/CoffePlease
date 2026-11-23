@@ -1,0 +1,40 @@
+name: Build, test and verify levels 1–4, 6–7
+on:
+  push:
+    branches:
+      - main
+      - fix/continuidad-niveles-04-06-07
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild the six available levels
+        run: npm run build
+      - name: Test levels, hazards, telemetry API and continuity
+        run: npm test
+      - name: Validate generated browser JavaScript
+        run: |
+          for file in src/*-game.generated.js; do node --input-type=module --check < "$file"; done
+          node tests/continuity.test.cjs
+      - name: Commit generated previews on integration branch
+        if: github.event_name == 'push' && github.ref_name == 'fix/continuidad-niveles-04-06-07'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/juego/index.html public/oficina/index.html public/obra/index.html public/sala/index.html public/terminal/index.html public/embarque/index.html public/levels.json src/*-game.generated.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build: regenerate six playable levels and permanent transitions"
+            git push
+          fi

@@ -10,11 +10,12 @@
     "test:api": "node tests/api.test.mjs",
     "test:browser": "node tests/browser.test.cjs",
     "test:airport:browser": "node tests/airport.browser.test.cjs",
-    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs && node --test tests/living.test.mjs && node --test tests/terminal.test.mjs tests/embarque.test.mjs",
+    "test": "node tests/level.test.mjs && node tests/office.test.mjs && node --test tests/construction.test.mjs && node tests/api.test.mjs && node --test tests/living.test.mjs && node --test tests/terminal.test.mjs tests/embarque.test.mjs && node tests/continuity.test.cjs",
     "test:construction": "node --test tests/construction.test.mjs",
     "test:living": "node --test tests/living.test.mjs",
     "test:terminal": "node --test tests/terminal.test.mjs",
-    "test:embarque": "node --test tests/embarque.test.mjs"
+    "test:embarque": "node --test tests/embarque.test.mjs",
+    "test:continuity": "node tests/continuity.test.cjs"
   },
   "engines": {
     "node": ">=18"
