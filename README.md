@@ -94,3 +94,16 @@ Se preservan niveles 1–3, aspiradora, gato, checkpoints, transición obra→sa
 El nivel 1 se rediseñó según el plano cenital del usuario: comedor en el sur, descenso por la silla izquierda, ascenso por repisas de pared, zona de limpieza y **fregadero lleno de agua** con cuatro plataformas de trastes/utensilios. Si la taza falla un salto sobre la tarja, se hunde y reaparece en el checkpoint anterior. Después recorre microondas, estufa, barra lateral, molino y cafetera. Se mantienen los enemigos y obstáculos anteriores. Las latas ahora caen en ubicaciones que corresponden a las nuevas alacenas.
 
 Fuentes: `src/physics.js`, `src/game.js`; documentación en `DISENO_NIVEL_01.md`. El dashboard muestra el agua en azul y los trastes como apoyos. Generar los cuatro niveles con `npm run build`, probar con `npm test` y abrir `http://localhost:3000/juego/`.
+
+## v1.9.1 — Cadena de niveles: sala → terminal → embarque
+
+La publicación temporal salta directamente del **nivel 4** (sala) al **nivel 6** (terminal) y después al **nivel 7** (embarque), porque **el nivel 5 todavía no está implementado**. Se mantienen los números y los identificadores, para insertar la cafetería como nivel 5 posteriormente.
+
+- Sala: `/sala/` → victoria → **Continuar a la terminal** → `/terminal/`.
+- Terminal (6): `/terminal/` → victoria → **Continuar al embarque** → `/embarque/`.
+- Embarque VIP (7): victoria → volver a jugar el último nivel.
+- La progresión anterior sigue siendo `/juego/` → `/oficina/` → `/obra/` → `/sala/`.
+- `npm run build` recompila los seis niveles existentes y registra ambos niveles nuevos en `public/levels.json`. El dashboard ofrece filtros y mapas para sala, terminal y embarque.
+- `npm test` incluye `tests/continuity.test.cjs`: comprueba las rutas **dentro de los HTML jugables reales**, los identificadores de telemetría, el dashboard y los archivos de los seis niveles. La comprobación se repite en GitHub Actions antes de publicar cambios.
+
+Los niveles 6 y 7 **ya estaban en el código fuente**, pero su integración en `main` carecía de los archivos generados y de las entradas del dashboard. Una recompilación a partir de esta versión regenera dichos artefactos. Para agregar el futuro nivel 5, cambiar la transición de `build-living.js` de `../terminal/` a `../cafeteria/`, y desde la cafetería conectar con `../terminal/`.

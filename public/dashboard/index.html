@@ -31,7 +31,7 @@ canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:12px;di
 <div id="err" hidden>No se pudo conectar con el servidor. Arráncalo con <b>npm start</b> y abre esta página desde <b>http://localhost:3000/dashboard/</b>.</div>
 <section class="cards" id="cards"></section>
 <section class="panel"><h2>Histórico de partidas</h2>
- <div class="filters"><select id="fN"><option value="obra-03-construccion">Nivel 3 · Obra en construcción</option><option value="oficina-02-plano">Nivel 2 · Oficina</option><option value="cocina-01-referencia">Nivel 1 · Cocina de casa</option><option value="cocina-01-abierta">Prototipo abierto anterior</option><option value="cocina-01">Nivel antiguo</option><option value="">Todos los niveles</option></select><select id="fJ"><option value="">Todos los jugadores</option></select>
+ <div class="filters"><select id="fN"><option value="embarque-07-vip">Nivel 7 · Embarque VIP</option><option value="terminal-06-seguridad">Nivel 6 · Terminal internacional</option><option value="sala-04-estar">Nivel 4 · Sala de estar</option><option value="obra-03-construccion">Nivel 3 · Obra en construcción</option><option value="oficina-02-plano">Nivel 2 · Oficina</option><option value="cocina-01-referencia">Nivel 1 · Cocina de casa</option><option value="cocina-01-abierta">Prototipo abierto anterior</option><option value="cocina-01">Nivel antiguo</option><option value="">Todos los niveles</option></select><select id="fJ"><option value="">Todos los jugadores</option></select>
  <select id="fR"><option value="">Todos los rangos</option><option>S</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
  <select id="fE"><option value="">Todos los resultados</option><option value="victoria">Victoria</option><option value="derrota_ruptura">Derrota · ruptura</option><option value="derrota_caida">Derrota · caída</option><option value="abandono">Abandono</option></select>
  <input type="date" id="fD" title="Desde"><input type="date" id="fH" title="Hasta"><button id="bClr">Limpiar</button></div>
@@ -55,7 +55,7 @@ function base(){
  const id=sel&&mode!=='ac'?sel.level_id:$('#fN').value,layout=layouts[id];
  cx.fillStyle='#eff3ee';cx.fillRect(0,0,cv.width,cv.height);
  if(!layout)return false;
- const office=id==='oficina-02-plano',construction=id==='obra-03-construccion',living=id==='sala-04-estar';S=office?18:construction?15.5:living?22.5:27;X0=office?-23:construction?-27:living?-18.7:-15.2;Z0=office?-17:construction?-20.8:living?-14:-12;
+ const office=id==='oficina-02-plano',construction=id==='obra-03-construccion',living=id==='sala-04-estar',airport=id==='terminal-06-seguridad'||id==='embarque-07-vip';S=office?18:construction?15.5:living?22.5:airport?15.5:27;X0=office?-23:construction?-27:living?-18.7:airport?-26:-15.2;Z0=office?-17:construction?-20.8:living?-14:airport?-15:-12;
  const floor=layout.platforms.find(p=>p.floor);
  cx.fillStyle=office?'#c4cec9':'#e8cba9';cx.fillRect(px(floor.x-floor.w/2),pz(floor.z-floor.d/2),floor.w*S,floor.d*S);
  for(const t of layout.trenches||[]){cx.fillStyle='#44372d';cx.fillRect(px(t.x-t.w/2),pz(-11),t.w*S,22*S);}
@@ -71,6 +71,12 @@ function base(){
  for(const g of layout.glue||[]){cx.beginPath();cx.arc(px(g.x),pz(g.z),g.r*S,0,Math.PI*2);cx.fillStyle='#e7c64a';cx.globalAlpha=.38;cx.fill();cx.globalAlpha=1;}
  for(const t of layout.bookTraps||[]){cx.beginPath();cx.arc(px(t.x),pz(t.z),.20*S,0,Math.PI*2);cx.fillStyle='#e66a32';cx.fill();}
  for(const f of layout.fans||[]){cx.fillStyle='#70afb7';cx.fillRect(px(f.x)-.16*S,pz(f.z)-.16*S,.32*S,.32*S);}
+ // Riesgos de terminal: cintas, cortinas y líneas de equipaje se representan en el mismo plano.
+ for(const cv of layout.conveyors||[]){const q=layout.platforms[cv.i];if(!q)continue;cx.fillStyle='#73b6bd';cx.globalAlpha=.55;cx.fillRect(px(q.x-q.w/2),pz(q.z-q.d/2),q.w*S,q.d*S);cx.globalAlpha=1;cx.fillStyle='#24505c';cx.font='18px system-ui';cx.fillText(cv.vx>0?'→':'←',px(q.x),pz(q.z));}
+ for(const ct of layout.curtains||[]){const q=layout.platforms[ct.i];if(!q)continue;cx.fillStyle='#414e54';cx.fillRect(px(ct.x-ct.w/2),pz(q.z-q.d/2),ct.w*S,q.d*S);}
+ for(const sc of layout.suitcases||[]){const pts=sc.pts||[];if(pts.length<2)continue;cx.beginPath();pts.forEach(([x,z],i)=>i?cx.lineTo(px(x),pz(z)):cx.moveTo(px(x),pz(z)));cx.strokeStyle='#7c4b32';cx.lineWidth=4;cx.stroke();}
+ for(const j of layout.jets||[]){cx.fillStyle='#85d9e8';cx.globalAlpha=.60;cx.fillRect(px(j.x-j.w/2),pz(j.z-j.d/2),j.w*S,j.d*S);cx.globalAlpha=1;}
+ for(const drip of layout.drips||[]){cx.beginPath();cx.arc(px(drip.x),pz(drip.z),.20*S,0,Math.PI*2);cx.fillStyle='#3c9ac5';cx.fill();}
  const goal=layout.platforms.find(p=>p.goal),start=layout.platforms[0];cx.font='18px system-ui';cx.fillText('☕',px(goal.x),pz(goal.z)-10);cx.fillText('🚩',px(start.x),pz(start.z)-10);
  return true;
 }
